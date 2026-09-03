@@ -1,0 +1,234 @@
+/*
+ * Copyright (C) 2018. OpenLattice, Inc.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *U
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * You can contact the owner of the copyright at support@openlattice.com
+ *
+ */
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath('io.swagger:swagger-codegen:3.0.0-rc1')
+    }
+}
+
+plugins {
+    id 'java-library'
+    id 'eclipse'
+    id 'idea'
+    id 'jacoco'
+    id 'checkstyle'
+    id 'maven-publish'
+    id 'signing'
+    id 'com.github.spotbugs'
+    id 'org.jetbrains.kotlin.jvm'
+    id 'org.jetbrains.kotlin.plugin.spring'
+    id 'org.jetbrains.dokka'
+}
+
+if (hasProperty('buildScan')) {
+    buildScan {
+        termsOfServiceUrl = "https://gradle.com/terms-of-service"
+        termsOfServiceAgree = "yes"
+    }
+}
+
+// dependencyLocking, java 21 source/target, shared KotlinCompile options,
+// checkstyle (shared pinned release, local gradles/checkstyle.xml), jacoco toolVersion, and the
+// spotbugs reportLevel/toolVersion defaults come from gradles/chronicle.gradle.
+
+description = "Chronicle REST APIs"
+group = "com.openlattice"
+ext.projectName = 'chronicle-api'
+ext.scmUrl = 'scm:git:https://github.com/uzaira0/chronicle-api.git'
+ext.connectionUrl = 'scm:git:https://github.com/uzaira0/chronicle-api.git'
+ext.developerConnectionUrl = 'scm:git:https://github.com/uzaira0/chronicle-api.git'
+
+if(!project.hasProperty('developmentMode')) {
+    ext.developmentMode = false
+}
+
+println projectName + " with developmentMode = " + project.developmentMode
+
+def localChronicleGradle = file("../gradles/chronicle.gradle")
+if (!localChronicleGradle.exists()) {
+    localChronicleGradle = file("../methodic/gradles/chronicle.gradle")
+}
+if (localChronicleGradle.exists()) {
+    apply from: localChronicleGradle
+} else {
+    throw new GradleException("Missing local Chronicle Gradle script: gradles/chronicle.gradle")
+}
+
+kotlin {
+    explicitApi()
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    if (name == 'compileKotlin') {
+        kotlinOptions.allWarningsAsErrors = true
+    }
+}
+
+tasks.withType(Javadoc) {
+    options.tags('apiNote:a:API Note:')
+    options.tags('implSpec:a:Implementation Requirements:')
+    options.tags('implNote:a:Implementation Note:')
+}
+
+spotbugsMain {
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+}
+
+//TODO: Once Swagger 3.0 has working OpenAPI support finish wiring all this in.
+
+import io.swagger.codegen.DefaultGenerator
+import io.swagger.codegen.config.CodegenConfigurator
+
+def swaggerInput = "chronicle.yaml"
+def swaggerOutputDir = file('build/swagger')
+task swaggerDocs {
+    inputs.file(swaggerInput)
+    outputs.dir(swaggerOutputDir)
+    doLast {
+        def config = new CodegenConfigurator()
+        config.setInputSpec(swaggerInput)
+        config.setOutputDir(swaggerOutputDir.path)
+        config.setLang('java')
+        config.setAdditionalProperties([
+                'dateLibrary': 'java8'
+        ])
+//        config.setImportMappings([
+//                'Dog': 'io.swagger.petstore.client.model.Dog'
+//        ])
+        new DefaultGenerator().opts(config.toClientOptInput()).generate()
+    }
+}
+
+task swaggerJava {
+    inputs.file(swaggerInput)
+    outputs.dir(swaggerOutputDir)
+    doLast {
+        def config = new CodegenConfigurator()
+        config.setInputSpec(swaggerInput)
+        config.setOutputDir(swaggerOutputDir.path)
+        config.setLang('java')
+        config.setAdditionalProperties([
+                'dateLibrary': 'java8'
+        ])
+        config.setImportMappings([
+                'Dog': 'io.swagger.petstore.client.model.Dog'
+        ])
+        new DefaultGenerator().opts(config.toClientOptInput()).generate()
+    }
+}
+
+// Referenced by .github/workflows/ci.yml ("Validate OpenAPI spec"). Parses and
+// validates chronicle.yaml with the OpenAPI 3 parser (on the buildscript classpath
+// via swagger-codegen) and fails the build on any parse/validation message.
+task validateOpenApiSpec {
+    inputs.file(swaggerInput)
+    doLast {
+        def parseOptions = new io.swagger.v3.parser.core.models.ParseOptions()
+        parseOptions.setResolve(true)
+        parseOptions.setResolveFully(true)
+        def result = new io.swagger.v3.parser.OpenAPIV3Parser()
+                .readLocation(file(swaggerInput).toURI().toString(), null, parseOptions)
+        def messages = result.getMessages() ?: []
+        if (result.getOpenAPI() == null) {
+            throw new GradleException("OpenAPI spec '${swaggerInput}' could not be parsed: ${messages}")
+        }
+        if (!messages.isEmpty()) {
+            throw new GradleException(
+                    "OpenAPI spec '${swaggerInput}' has ${messages.size()} validation error(s):\n  "
+                            + messages.join("\n  "))
+        }
+        logger.lifecycle("validateOpenApiSpec: '${swaggerInput}' is a valid OpenAPI "
+                + "${result.getOpenAPI().getOpenapi()} document (0 errors).")
+    }
+}
+
+clean.doFirst {
+    delete(swaggerOutputDir)
+}
+
+test {
+    // A failing API-model unit test MUST fail the build (was previously masked by
+    // ignoreFailures = true). chronicle-api:test is a CI gate (ci.yml).
+    ignoreFailures = false
+}
+
+dependencies {
+    spotbugsPlugins "com.h3xstream.findsecbugs:findsecbugs-plugin:${findsecbugs_version}"
+    compileOnly "net.jcip:jcip-annotations:${jcip_version}"
+    compileOnly "com.github.spotbugs:spotbugs-annotations:${spotbugs_annotations_version}"
+    testCompileOnly "net.jcip:jcip-annotations:${jcip_version}"
+    testCompileOnly "com.github.spotbugs:spotbugs-annotations:${spotbugs_annotations_version}"
+
+    // Data models (GPL) — shared data classes used by both Android app and server
+    api(project(":chronicle-models"))
+
+    implementation group: "org.slf4j", name: "slf4j-api", version: "${slf4j_version}"
+
+    implementation "com.squareup.retrofit2:retrofit:${retrofit2_version}"
+
+    implementation "org.apache.commons:commons-lang3:${commonsLang_version}"
+    implementation "commons-io:commons-io:${commonsio_version}"
+    implementation "com.google.guava:guava:${guava_android_version}"
+
+    implementation "com.fasterxml.jackson.core:jackson-core:${jackson_version}"
+    implementation "com.fasterxml.jackson.core:jackson-databind:${jackson_version}"
+    implementation "com.fasterxml.jackson.module:jackson-module-kotlin:${jackson_version}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${jackson_version}"
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-smile:${jackson_version}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jackson_version}"
+    implementation ("com.fasterxml.jackson.datatype:jackson-datatype-guava:${jackson_version}") {
+        exclude module: 'guava'
+    }
+
+    implementation "org.apache.olingo:odata-server-api:${odata_version}"
+    implementation "org.apache.olingo:odata-server-core:${odata_version}"
+    implementation "org.apache.olingo:odata-commons-api:${odata_version}"
+    implementation "org.apache.olingo:odata-commons-core:${odata_version}"
+
+
+
+    implementation "org.dmfs:lib-recur:0.10.2"
+
+    // Bean Validation (JSR-380) for input validation — Jakarta namespace for Spring 6
+    implementation "jakarta.validation:jakarta.validation-api:${jakarta_validation_api_version}"
+    implementation "org.hibernate.validator:hibernate-validator:${hibernate_validator_version}"
+    implementation "org.glassfish.expressly:expressly:${expressly_version}"
+
+    testImplementation "junit:junit:${junit_version}"
+    
+    /*
+     * TESTING
+     */
+    testImplementation group: 'org.apache.logging.log4j', name: 'log4j-slf4j2-impl', version: "${log4j_version}"
+    testImplementation group: 'org.apache.logging.log4j', name: 'log4j-api', version: "${log4j_version}"
+    testImplementation group: 'org.apache.logging.log4j', name: 'log4j-core', version: "${log4j_version}"
+    testImplementation group: 'org.apache.logging.log4j', name: 'log4j-web', version: "${log4j_version}"
+    testImplementation("org.mockito:mockito-core:${mockito_version}") {
+        exclude module: 'hamcrest'
+        exclude module: 'hamcrest-core'
+    }
+}

@@ -1,0 +1,32 @@
+// Standalone builds need plugin versions here; inside the root composite the
+// root settings.gradle.kts pluginManagement wins. Keep versions in lockstep
+// with the root file (and chronicle-server/settings.gradle).
+pluginManagement {
+    plugins {
+        id 'org.jetbrains.kotlin.jvm' version '2.3.21'
+        id 'org.jetbrains.kotlin.plugin.spring' version '2.3.21'
+        id 'org.jetbrains.dokka' version '2.2.0'
+        id 'com.github.spotbugs' version '6.5.5'
+        id 'org.owasp.dependencycheck' version '12.2.2'
+        id 'org.hidetake.swagger.generator' version '2.19.2'
+        id 'com.github.johnrengelman.shadow' version '8.1.1'
+        id 'com.github.jk1.dependency-license-report' version '3.1.2'
+    }
+    repositories {
+        maven { url = uri('https://plugins.gradle.org/m2/') }
+        mavenCentral()
+    }
+}
+
+rootProject.name='chronicle-api'
+
+// Standalone builds resolve the shared models from the sibling monorepo
+// checkout (same pattern as chronicle-server/settings.gradle). Overridable
+// with -PchronicleModelsDir=... or CHRONICLE_MODELS_DIR.
+def modelsDir = gradle.startParameter.projectProperties['chronicleModelsDir'] ?:
+        System.getenv('CHRONICLE_MODELS_DIR') ?: '../chronicle-models'
+if (!file(modelsDir).exists()) {
+    throw new GradleException("Composite checkout not found for chronicle-models: ${file(modelsDir)}")
+}
+include ':chronicle-models'
+project(':chronicle-models').projectDir = file(modelsDir)

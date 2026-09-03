@@ -1,0 +1,5404 @@
+openapi: "3.0.3"
+info:
+  title: "Chronicle API"
+  description: |
+    Chronicle is a research data collection platform for studies involving mobile device usage,
+    time-use diaries, and participant surveys. This API covers all V3 endpoints used by
+    the web dashboard and mobile applications.
+  version: "3.0.0"
+  contact:
+    email: "support@openlattice.com"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+
+servers:
+  - url: "{baseUrl}"
+    description: "Chronicle server"
+    variables:
+      baseUrl:
+        default: "http://localhost:40320"
+
+tags:
+  - name: Study
+    description: Study management, enrollment, data upload, and participant operations
+  - name: Survey
+    description: Questionnaires, app usage surveys, and device usage data
+  - name: TimeUseDiary
+    description: Time-use diary submissions and retrieval
+  - name: Candidate
+    description: Candidate (person) registration and lookup
+  - name: Permissions
+    description: Access control list management
+  - name: Authorizations
+    description: Authorization checks and accessible object queries
+  - name: Admin
+    description: Administrative operations (cache reload, principal management)
+  - name: Organization
+    description: Organization CRUD operations
+  - name: Notification
+    description: Researcher notification settings and participant notifications
+  - name: Principal
+    description: User and role management
+
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+paths:
+  # ==========================================================================
+  # Study API — /chronicle/v3/study
+  # ==========================================================================
+  /chronicle/v3/study:
+    post:
+      tags: [Study]
+      summary: Create a new study
+      operationId: createStudy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Study'
+      responses:
+        '200':
+          description: UUID of the created study
+          content:
+            application/json:
+              schema:
+                type: string
+                format: uuid
+    get:
+      tags: [Study]
+      summary: Get all studies accessible to the current user
+      operationId: getAllStudies
+      responses:
+        '200':
+          description: List of studies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Study'
+
+  /chronicle/v3/study/{studyId}:
+    get:
+      tags: [Study]
+      summary: Get a study by ID
+      operationId: getStudy
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      responses:
+        '200':
+          description: The study
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Study'
+    patch:
+      tags: [Study]
+      summary: Update a study
+      operationId: updateStudy
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - name: retrieve
+          in: query
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudyUpdate'
+      responses:
+        '200':
+          description: Updated study (if retrieve=true) or empty
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Study'
+    delete:
+      tags: [Study]
+      summary: Delete a study
+      operationId: destroyStudy
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      responses:
+        '200':
+          description: UUIDs of deleted entities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+
+  /chronicle/v3/study/organization/{organizationId}:
+    get:
+      tags: [Study]
+      summary: Get all studies for an organization
+      operationId: getOrgStudies
+      parameters:
+        - $ref: '#/components/parameters/organizationId'
+      responses:
+        '200':
+          description: List of studies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Study'
+
+  /chronicle/v3/study/{studyId}/participant:
+    post:
+      tags: [Study]
+      summary: Register a participant in a study
+      operationId: registerParticipant
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Participant'
+      responses:
+        '200':
+          description: UUID of the registered participant
+          content:
+            application/json:
+              schema:
+                type: string
+                format: uuid
+
+  /chronicle/v3/study/{studyId}/participants:
+    get:
+      tags: [Study]
+      summary: Get all participants in a study
+      operationId: getStudyParticipants
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      responses:
+        '200':
+          description: List of participants
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Participant'
+    delete:
+      tags: [Study]
+      summary: Delete participants from a study
+      operationId: deleteStudyParticipants
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+      responses:
+        '200':
+          description: UUIDs of deleted entities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+
+  /chronicle/v3/study/{studyId}/participant/{participantId}/verify:
+    get:
+      tags: [Study]
+      summary: Verify a participant is enrolled in a study
+      operationId: isKnownParticipant
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+      responses:
+        '200':
+          description: Whether the participant is known
+          content:
+            application/json:
+              schema:
+                type: boolean
+
+  /chronicle/v3/study/{studyId}/participant/{participantId}/status:
+    patch:
+      tags: [Study]
+      summary: Update participation status
+      operationId: updateParticipationStatus
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - name: participationStatus
+          in: query
+          required: true
+          schema:
+            $ref: '#/components/schemas/ParticipationStatus'
+      responses:
+        '200':
+          description: OK
+
+  /chronicle/v3/study/{studyId}/participant/{participantId}/annotations:
+    patch:
+      tags: [Study]
+      summary: Update participant annotations
+      operationId: updateParticipantAnnotations
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '200':
+          description: OK
+
+  /chronicle/v3/study/{studyId}/participant/{participantId}/{sourceDeviceId}/enroll:
+    post:
+      tags: [Study]
+      summary: Enroll a participant's device in a study (deprecated)
+      description: |
+        Deprecated. Use POST `/chronicle/v4/study/{studyId}/participant/{participantId}/enroll`
+        which carries the Chronicle app-instance ID in the `X-Chronicle-Device-Id` header.
+      deprecated: true
+      operationId: enroll
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - $ref: '#/components/parameters/sourceDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SourceDevice'
+      responses:
+        '200':
+          description: |
+            Enrollment response for this app-instance enrollment event. On servers
+            that issue per-device API keys (the BCM server) `apiKey` is populated;
+            legacy upstream servers may return `apiKey: null`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentResponse'
+
+  /chronicle/v4/study/{studyId}/participant/{participantId}/enrollment-preview:
+    get:
+      tags: [Study]
+      summary: Resolve a one-time invitation to its authoritative participant disclosure
+      operationId: getEnrollmentPreviewV4
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - in: header
+          name: X-Chronicle-Enrollment-Code
+          required: true
+          description: One-time invitation credential. Preview validates it without consuming it.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The study-controlled disclosure and exact collection revision to review.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentPreviewResponse'
+
+  /chronicle/v4/study/{studyId}/participant/{participantId}/enroll:
+    post:
+      tags: [Study]
+      summary: Enroll a participant's device in a study
+      operationId: enrollV4
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - in: header
+          name: X-Chronicle-Device-Id
+          required: true
+          description: |
+            Chronicle app-instance ID generated and encrypted by the mobile app.
+            This is not an Android hardware identifier. It remains stable while
+            app data is intact so same-app re-enrollment can be distinguished from
+            multiple app instances for the same participant.
+          schema:
+            type: string
+        - in: header
+          name: X-Chronicle-Enrollment-Code
+          required: false
+          description: |
+            One-time participant enrollment code delivered in the enrollment-link
+            URL fragment. Public mobile builds use it to bootstrap enrollment
+            without embedding a shared server secret. The server consumes it for
+            this exact study and participant; it is never reusable.
+          schema:
+            type: string
+        - in: header
+          name: X-Chronicle-Manifest-Digest
+          required: false
+          description: |
+            Lowercase SHA-256 digest returned by enrollment-preview. Required when
+            X-Chronicle-Enrollment-Code is used; enrollment is rejected if the
+            study policy or collection settings changed after preview.
+          schema:
+            type: string
+            pattern: '^[0-9a-f]{64}$'
+        - in: header
+          name: X-Chronicle-Enrollment-Attempt-Id
+          required: false
+          description: |
+            Client-generated canonical UUID for this durable enrollment attempt,
+            stable across exact retries. When X-Chronicle-Enrollment-Code is used,
+            all four invitation credential headers (code, manifest digest, attempt
+            ID, and proposed API key) are required together.
+          schema:
+            type: string
+            format: uuid
+        - in: header
+          name: X-Chronicle-Proposed-Api-Key
+          required: false
+          description: |
+            Client-generated per-device API key proposed for this durable enrollment
+            attempt. It is bound to X-Chronicle-Enrollment-Attempt-Id and must remain
+            stable across exact retries. It is required whenever the one-time
+            enrollment-code flow is used.
+          schema:
+            type: string
+            pattern: '^ck_[0-9A-Za-z]{8}_[0-9A-Za-z]{32}$'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SourceDevice'
+      responses:
+        '200':
+          description: |
+            Enrollment response for this app-instance enrollment event. On servers
+            that issue per-device API keys (the BCM server) `apiKey` is populated
+            and the client uses `X-Api-Key` for uploads; legacy upstream servers
+            may return `apiKey: null`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentResponse'
+
+  /chronicle/v4/mobile/enrollments/current:
+    delete:
+      tags: [Study]
+      summary: Withdraw the authenticated device's own enrollment
+      description: |
+        Participant self-service withdrawal. The enrollment to withdraw is
+        identified entirely by the participant- and device-bound API key —
+        no study or participant appears in the path. Auth (`X-Api-Key`) and
+        the Chronicle app-instance id (`X-Chronicle-Device-Id`) ride the
+        standard v4 mobile headers.
+
+        Idempotent: before its first request the client generates and durably
+        stores a canonical lowercase UUID in
+        `X-Chronicle-Withdrawal-Request-Id`. The server binds that exact UUID
+        to the authenticated credential and creates deletion work at most
+        once. A revoked key remains accepted here (only here) for an exact
+        bound retry until a newer active key exists for the same device, so a
+        client that crashed mid-request can safely retry and observe the same
+        withdrawal result.
+      operationId: withdrawCurrentEnrollment
+      parameters:
+        - in: header
+          name: X-Chronicle-Device-Id
+          required: true
+          description: Chronicle app-instance ID generated and encrypted by the mobile app.
+          schema:
+            type: string
+        - in: header
+          name: X-Chronicle-Withdrawal-Request-Id
+          required: true
+          description: >-
+            Canonical lowercase UUID generated and persisted by the client
+            before the first withdrawal attempt, then reused unchanged for
+            every retry of that withdrawal.
+          schema:
+            type: string
+            format: uuid
+            pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      responses:
+        '202':
+          description: |
+            Withdrawal accepted. Participation is marked NOT_ENROLLED, data
+            deletion jobs are queued, and the device API key is revoked.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnrollmentWithdrawalResponse'
+
+  /chronicle/v4/study/{studyId}/participant/{participantId}/android/collection-ack:
+    post:
+      tags: [Study]
+      summary: Report a participant's acknowledgment of newly-enabled collection modules
+      operationId: reportCollectionAcknowledgmentV4
+      description: >-
+        Records a participant's on-device acknowledgment of one or more newly-enabled
+        collection modules — the device-side close of the consent loop (collection loop
+        closure design §5.2). A module a researcher enables stays in PENDING_ACK (not
+        collecting) until the participant acknowledges it on-device. Auth (`X-Api-Key`)
+        and app-instance id (`X-Chronicle-Device-Id`) ride the standard v4 android headers.
+        The server stamps its own authoritative receipt time; the body's
+        `acknowledgedAt` is advisory only.
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - $ref: '#/components/parameters/chronicleDeviceIdHeader'
+        - $ref: '#/components/parameters/mobileApiKeyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectionAcknowledgment'
+      responses:
+        '200':
+          description: OK
+
+  /chronicle/v4/study/{studyId}/participant/{participantId}/android:
+    post:
+      tags: [Study]
+      summary: Upload Android usage and lifecycle event data
+      operationId: uploadAndroidUsageEventDataV4
+      description: >-
+        Uploads the authenticated app instance's usage and lifecycle event batch.
+        The app-instance id is carried in `X-Chronicle-Device-Id`; the participant-
+        and device-bound API key is carried in `X-Api-Key`.
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - $ref: '#/components/parameters/chronicleDeviceIdHeader'
+        - $ref: '#/components/parameters/mobileApiKeyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChronicleData'
+      responses:
+        '200':
+          description: Number of records uploaded
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v4/study/{studyId}/participant/{participantId}/android/sensors:
+    post:
+      tags: [Study]
+      summary: Upload Android sensor data
+      operationId: uploadAndroidSensorDataV4
+      description: >-
+        Uploads the authenticated app instance's Android sensor sample batch.
+        The app-instance id is carried in `X-Chronicle-Device-Id`; the participant-
+        and device-bound API key is carried in `X-Api-Key`.
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - $ref: '#/components/parameters/chronicleDeviceIdHeader'
+        - $ref: '#/components/parameters/mobileApiKeyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AndroidSensorSample'
+      responses:
+        '200':
+          description: Number of records uploaded
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v4/study/{studyId}/participant/{participantId}/android/battery:
+    post:
+      tags: [Study]
+      summary: Upload Android battery telemetry
+      operationId: uploadBatteryTelemetryV4
+      description: >-
+        Uploads the authenticated app instance's `battery_telemetry` sample batch.
+        The app-instance id is carried in `X-Chronicle-Device-Id`; the participant-
+        and device-bound API key is carried in `X-Api-Key`.
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - $ref: '#/components/parameters/chronicleDeviceIdHeader'
+        - $ref: '#/components/parameters/mobileApiKeyHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/BatterySample'
+      responses:
+        '200':
+          description: Number of samples uploaded
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v3/study/{studyId}/participant/{participantId}/android/{sourceDeviceId}:
+    post:
+      tags: [Study]
+      summary: Upload Android usage event data
+      operationId: uploadAndroidUsageEventData
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - $ref: '#/components/parameters/sourceDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChronicleData'
+      responses:
+        '200':
+          description: Number of records uploaded
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v3/study/{studyId}/participant/{participantId}/android/{sourceDeviceId}/sensors:
+    post:
+      tags: [Study]
+      summary: Upload Android sensor data
+      operationId: uploadAndroidSensorData
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - $ref: '#/components/parameters/sourceDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AndroidSensorSample'
+      responses:
+        '200':
+          description: Number of records uploaded
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v3/study/{studyId}/participant/{participantId}/android/{sourceDeviceId}/battery:
+    post:
+      tags: [Study]
+      summary: Upload Android battery telemetry
+      description: |
+        Uploads a batch of battery-telemetry samples collected by the Android
+        `battery_telemetry` collection module. The v4 equivalent carries the
+        Chronicle app-instance id in the `X-Chronicle-Device-Id` header.
+      operationId: uploadBatteryTelemetry
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - $ref: '#/components/parameters/sourceDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/BatterySample'
+      responses:
+        '200':
+          description: Number of samples uploaded
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v4/study/{studyId}/participant/{participantId}/android/interaction:
+    post:
+      tags: [Study]
+      summary: Upload Android interaction-salience events
+      description: |
+        Uploads a batch of interaction-salience events collected by the Android
+        `interaction_events` collection module. INTERACTION_METADATA-class data —
+        content-free (screen-region grid cell + element role + foreground package),
+        never element text. Auth (`X-Api-Key`) and the Chronicle app-instance id
+        (`X-Chronicle-Device-Id`) ride the standard v4 android headers — matching
+        every sibling android module (audio-activity, sleep, …). This replaces the
+        retired v3 `{sourceDeviceId}`-in-path form; only v4 is server-implemented.
+      operationId: uploadInteractionEvents
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - in: header
+          name: X-Chronicle-Device-Id
+          required: true
+          description: Chronicle app-instance ID generated and encrypted by the mobile app.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AndroidInteractionEvent'
+      responses:
+        '200':
+          description: Number of events uploaded
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v4/study/{studyId}/participant/{participantId}/android/audio-activity:
+    post:
+      tags: [Study]
+      summary: Upload Android audio-activity events
+      description: |
+        Uploads a batch of audio-activity events collected by the Android
+        `audio_activity` collection module. Behavioral-metadata-class data —
+        mic-free by construction: it carries which app is producing audio, the
+        playback/route/volume state and ringer/DND posture, but never any audio
+        content or microphone capture. Auth (`X-Api-Key`) and the Chronicle
+        app-instance id (`X-Chronicle-Device-Id`) ride the standard v4 android
+        headers.
+      operationId: uploadAudioActivityEvents
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - in: header
+          name: X-Chronicle-Device-Id
+          required: true
+          description: Chronicle app-instance ID generated and encrypted by the mobile app.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AndroidAudioActivityEvent'
+      responses:
+        '200':
+          description: Number of events uploaded
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v4/study/{studyId}/participant/{participantId}/android/audio-content:
+    post:
+      tags: [Study]
+      summary: Upload Android audio-content events
+      description: |
+        Uploads a batch of audio-content events collected by the Android
+        `audio_content` collection module. Media-content-class data — the
+        opt-in track-metadata path: it carries the active media session's
+        title / artist / album and play position for the foreground audio
+        package, never the audio itself. Auth (`X-Api-Key`) and the Chronicle
+        app-instance id (`X-Chronicle-Device-Id`) ride the standard v4 android
+        headers.
+      operationId: uploadAudioContentEvents
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - in: header
+          name: X-Chronicle-Device-Id
+          required: true
+          description: Chronicle app-instance ID generated and encrypted by the mobile app.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AndroidAudioContentEvent'
+      responses:
+        '200':
+          description: Number of events uploaded
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v4/study/{studyId}/participant/{participantId}/android/notification-activity:
+    post:
+      tags: [Study]
+      summary: Upload Android notification-activity events
+      description: |
+        Uploads a batch of notification-activity events collected by the Android
+        `notification_activity` collection module. Behavioral-metadata-class data —
+        content-free by construction: it carries per-app notification posted/removed
+        events with category and importance, but never any notification text or
+        title. Auth (`X-Api-Key`) and the Chronicle app-instance id
+        (`X-Chronicle-Device-Id`) ride the standard v4 android headers.
+      operationId: uploadNotificationActivityEvents
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - in: header
+          name: X-Chronicle-Device-Id
+          required: true
+          description: Chronicle app-instance ID generated and encrypted by the mobile app.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AndroidNotificationActivityEvent'
+      responses:
+        '200':
+          description: Number of events uploaded
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v4/study/{studyId}/participant/{participantId}/android/sleep:
+    post:
+      tags: [Study]
+      summary: Upload Android sleep events
+      description: |
+        Uploads a batch of sleep samples collected by the Android `sleep` collection
+        module (Google Play Services Sleep API). Health-metrics-class data —
+        content-free and mic-free by construction: a sleep label/confidence plus the
+        coarse light/motion levels the on-device classifier reports. Auth (`X-Api-Key`)
+        and the Chronicle app-instance id (`X-Chronicle-Device-Id`) ride the standard
+        v4 android headers.
+      operationId: uploadSleepEvents
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - in: header
+          name: X-Chronicle-Device-Id
+          required: true
+          description: Chronicle app-instance ID generated and encrypted by the mobile app.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AndroidSleepEvent'
+      responses:
+        '200':
+          description: Number of events uploaded
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v4/study/{studyId}/participant/{participantId}/android/activity-recognition:
+    post:
+      tags: [Study]
+      summary: Upload Android activity-recognition events
+      description: |
+        Uploads a batch of activity-recognition samples collected by the Android
+        `activity_recognition` collection module (Play Services Activity Recognition /
+        Activity Transition API). Behavioral-metadata-class data (default OFF) —
+        content-free: an activity label plus confidence, no raw sensors or location.
+        Auth (`X-Api-Key`) and the Chronicle app-instance id (`X-Chronicle-Device-Id`)
+        ride the standard v4 android headers.
+      operationId: uploadActivityRecognitionEvents
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - in: header
+          name: X-Chronicle-Device-Id
+          required: true
+          description: Chronicle app-instance ID generated and encrypted by the mobile app.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AndroidActivityRecognitionEvent'
+      responses:
+        '200':
+          description: Number of events uploaded
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v4/study/{studyId}/participant/{participantId}/android/health-connect:
+    post:
+      tags: [Study]
+      summary: Upload Android Health Connect metrics
+      description: |
+        Uploads a batch of health-metric records read from the system Health Connect
+        store by the Android `health_connect` collection module. Health-metrics-class
+        data, opt-in. Each record is an aggregated/instantaneous value (interpreted per
+        metricType + unit); Chronicle only reads records the participant's own
+        apps/wearables have written. Auth (`X-Api-Key`) and the Chronicle app-instance
+        id (`X-Chronicle-Device-Id`) ride the standard v4 android headers.
+      operationId: uploadHealthMetrics
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - in: header
+          name: X-Chronicle-Device-Id
+          required: true
+          description: Chronicle app-instance ID generated and encrypted by the mobile app.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AndroidHealthMetricEvent'
+      responses:
+        '200':
+          description: Number of records uploaded
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v4/study/{studyId}/participant/{participantId}/android/connectivity-state:
+    post:
+      tags: [Study]
+      summary: Upload Android connectivity-state events
+      description: |
+        Uploads a batch of connectivity-state samples collected by the Android
+        `connectivity_state` collection module. Device-state-metadata-class data
+        (default OFF) — the active transport plus metered/validated flags only; no
+        SSID, BSSID, IP, or cell identifiers (those would be a location proxy). Auth
+        (`X-Api-Key`) and the Chronicle app-instance id (`X-Chronicle-Device-Id`) ride
+        the standard v4 android headers.
+      operationId: uploadConnectivityStateEvents
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - in: header
+          name: X-Chronicle-Device-Id
+          required: true
+          description: Chronicle app-instance ID generated and encrypted by the mobile app.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AndroidConnectivityStateEvent'
+      responses:
+        '200':
+          description: Number of events uploaded
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v4/study/{studyId}/participant/{participantId}/android/app-network-usage:
+    post:
+      tags: [Study]
+      summary: Upload Android per-app network-usage events
+      description: |
+        Uploads a batch of per-app network-usage buckets collected by the Android
+        `app_network_usage` collection module (NetworkStatsManager).
+        Behavioral-metadata-class data (default OFF) — volume counts only: the
+        transmitted/received byte counts for one app over one time bucket, with zero
+        visibility into payloads, destinations, domains, or URLs. Auth (`X-Api-Key`)
+        and the Chronicle app-instance id (`X-Chronicle-Device-Id`) ride the standard
+        v4 android headers.
+      operationId: uploadAppNetworkUsage
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - in: header
+          name: X-Chronicle-Device-Id
+          required: true
+          description: Chronicle app-instance ID generated and encrypted by the mobile app.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AndroidAppNetworkUsageEvent'
+      responses:
+        '200':
+          description: Number of events uploaded
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v4/study/{studyId}/participant/{participantId}/android/device-settings:
+    post:
+      tags: [Study]
+      summary: Upload Android device-settings snapshots
+      description: |
+        Uploads a batch of device-settings snapshots collected by the Android
+        `device_settings` collection module. Device-state-metadata-class data
+        (default OFF) — a content-free, identity-free snapshot of display / sound /
+        accessibility / system toggles; nothing reveals what the participant does, only
+        how the device is configured. Auth (`X-Api-Key`) and the Chronicle app-instance
+        id (`X-Chronicle-Device-Id`) ride the standard v4 android headers.
+      operationId: uploadDeviceSettings
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - in: header
+          name: X-Chronicle-Device-Id
+          required: true
+          description: Chronicle app-instance ID generated and encrypted by the mobile app.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AndroidDeviceSettingsEvent'
+      responses:
+        '200':
+          description: Number of snapshots uploaded
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v4/study/{studyId}/participant/{participantId}/android/upload-diagnostics:
+    post:
+      tags: [Study]
+      summary: Upload bounded Android delivery diagnostics
+      description: |
+        Uploads idempotent, bounded, structured aggregates describing earlier
+        Android upload failures. Study, participant, and app-instance identity come from
+        the authenticated path and headers. The payload must not contain credentials or
+        unrestricted stack traces. A successful response acknowledges every supplied id.
+      operationId: uploadAndroidUploadDiagnostics
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - in: header
+          name: X-Chronicle-Device-Id
+          required: true
+          description: Chronicle app-instance ID generated and encrypted by the mobile app.
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+        - in: header
+          name: X-Api-Key
+          required: true
+          description: Per-device API key issued by the exact enrolled study server.
+          schema:
+            type: string
+            minLength: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              minItems: 1
+              maxItems: 500
+              items:
+                $ref: '#/components/schemas/AndroidUploadDiagnosticEvent'
+      responses:
+        '200':
+          description: Diagnostic event identifiers acknowledged by the server
+          content:
+            application/json:
+              schema:
+                type: array
+                minItems: 1
+                maxItems: 500
+                items:
+                  type: string
+                  format: uuid
+
+  /chronicle/v4/study/{studyId}/participant/{participantId}/android/encrypted:
+    post:
+      tags: [Study]
+      summary: Upload envelope-encrypted Android sensor/usage/battery data
+      description: |
+        HIPAA-2028 "W2" envelope-encrypted upload. The device seals each batch of
+        sensor, usage, or battery samples into one or more `EncryptedEnvelope`s
+        (hybrid AES-256-GCM content encryption + RSA-OAEP-SHA256 key wrapping) before
+        upload, so the payload is opaque in transit and at rest until decrypted with
+        the study's private key (held in Vault). Studies opt in via the
+        `StudyEncryptionSetting` (settings type `Encryption`); the device fetches that
+        study's RSA public key and `keyId` from
+        `GET /chronicle/v3/study/{studyId}/settings/type/Encryption` and seals to it.
+
+        Each envelope's `payloadType` (sensor, usage, battery, interaction, audio_activity,
+        audio_content, notification_activity) selects the destination
+        store after decryption. Auth (`X-Api-Key`) and the Chronicle app-instance id
+        (`X-Chronicle-Device-Id`) ride the standard v4 android headers.
+      operationId: uploadAndroidEncryptedData
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - in: header
+          name: X-Chronicle-Device-Id
+          required: true
+          description: |
+            Chronicle app-instance ID generated and encrypted by the mobile app.
+            This is not an Android hardware identifier.
+          schema:
+            type: string
+        - in: header
+          name: X-Api-Key
+          required: true
+          description: |
+            Per-device API key bound to (studyId, participantId, chronicleId),
+            issued at enrollment.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/EncryptedEnvelope'
+      responses:
+        '200':
+          description: Number of records stored (sum of decrypted samples across envelopes)
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v3/study/{studyId}/participant/{participantId}/android/{sourceDeviceId}/sensors/availability:
+    post:
+      tags: [Study]
+      summary: Report Android sensor availability for a device
+      operationId: reportAndroidSensorAvailability
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - $ref: '#/components/parameters/sourceDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AndroidDeviceSensorAvailability'
+      responses:
+        '200':
+          description: Number of records stored
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v3/study/{studyId}/participant/{participantId}/ios/{sourceDeviceId}:
+    post:
+      tags: [Study]
+      summary: Upload iOS sensor data
+      operationId: uploadSensorData
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - $ref: '#/components/parameters/sourceDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              minItems: 0
+              maxItems: 10000
+              items:
+                $ref: '#/components/schemas/SensorDataSample'
+      responses:
+        '200':
+          description: Number of records uploaded
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v3/study/{studyId}/participant/{participantId}/ios/{sourceDeviceId}/screen-time:
+    post:
+      tags: [Study]
+      summary: Upload iOS Screen Time usage data
+      operationId: uploadScreenTimeData
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - $ref: '#/components/parameters/sourceDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScreenTimeUsageEnvelope'
+      responses:
+        '200':
+          description: Number of records uploaded
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v3/study/{studyId}/participant/{participantId}/ios/{sourceDeviceId}/user-identification:
+    post:
+      tags: [Study]
+      summary: Upload iOS user identification snapshots
+      operationId: uploadUserIdentificationData
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - $ref: '#/components/parameters/sourceDeviceId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserIdentificationEnvelope'
+      responses:
+        '200':
+          description: Number of records uploaded
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v4/study/{studyId}/participant/{participantId}/ios/collection-ack:
+    post:
+      tags: [Study]
+      summary: Report an iOS participant's acknowledgment of collection modules
+      operationId: reportCollectionAcknowledgmentIosV4
+      description: >-
+        iOS counterpart of `reportCollectionAcknowledgmentV4` — records a participant's
+        on-device acknowledgment (accept/decline) of consent-gated collection modules,
+        closing the consent loop for the iOS collector. Same body, semantics, and
+        append-only trail as the android route; the server stamps its own authoritative
+        receipt time and the body's `acknowledgedAt` stays advisory. Auth (`X-Api-Key`)
+        and app-instance id (`X-Chronicle-Device-Id`) ride the standard v4 headers.
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - in: header
+          name: X-Chronicle-Device-Id
+          required: true
+          description: Chronicle app-instance ID generated and encrypted by the mobile app.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectionAcknowledgment'
+      responses:
+        '200':
+          description: OK
+
+  /chronicle/v4/study/{studyId}/participant/{participantId}/ios/battery:
+    post:
+      tags: [Study]
+      summary: Upload iOS battery telemetry
+      description: |
+        Uploads a batch of battery-telemetry samples collected by the iOS
+        `battery_telemetry` collection module. iOS exposes only charge level, a
+        coarse charging state, and Low Power Mode — no temperature, voltage, health,
+        or plug type — so the sample schema is deliberately slimmer than the Android
+        `BatterySample`; the missing hardware fields are stored as NULL, never
+        fabricated. Auth (`X-Api-Key`) and the Chronicle app-instance id
+        (`X-Chronicle-Device-Id`) ride the standard v4 headers.
+      operationId: uploadIosBatteryTelemetry
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - in: header
+          name: X-Chronicle-Device-Id
+          required: true
+          description: Chronicle app-instance ID generated and encrypted by the mobile app.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              maxItems: 10000
+              items:
+                $ref: '#/components/schemas/IosBatterySample'
+      responses:
+        '200':
+          description: Number of samples uploaded
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v4/study/{studyId}/participant/{participantId}/ios/connectivity-state:
+    post:
+      tags: [Study]
+      summary: Upload iOS connectivity-state events
+      description: |
+        Uploads a batch of connectivity-state samples collected by the iOS
+        `connectivity_state` collection module (NWPathMonitor). Device-state-metadata-class
+        data (default OFF) — the active transport plus metered/validated flags only; no
+        SSID, BSSID, IP, or cell identifiers. The sample schema is shared with the
+        android route (`AndroidConnectivityStateEvent` is platform-neutral despite its
+        historical name). Auth (`X-Api-Key`) and the Chronicle app-instance id
+        (`X-Chronicle-Device-Id`) ride the standard v4 headers.
+      operationId: uploadIosConnectivityStateEvents
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - in: header
+          name: X-Chronicle-Device-Id
+          required: true
+          description: Chronicle app-instance ID generated and encrypted by the mobile app.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              maxItems: 10000
+              items:
+                $ref: '#/components/schemas/AndroidConnectivityStateEvent'
+      responses:
+        '200':
+          description: Number of events uploaded
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v4/study/{studyId}/participant/{participantId}/ios/health-connect:
+    post:
+      tags: [Study]
+      summary: Upload iOS HealthKit metrics
+      description: |
+        Uploads a batch of health-metric records read from HealthKit by the iOS
+        realization of the `health_connect` collection module (the module id names the
+        concept — the participant's system health store — not the Android API).
+        Health-metrics-class data, opt-in. The record schema is shared with the android
+        route (`AndroidHealthMetricEvent` is platform-neutral despite its historical
+        name; `sourcePackage` carries the source app's bundle identifier on iOS). Auth
+        (`X-Api-Key`) and the Chronicle app-instance id (`X-Chronicle-Device-Id`) ride
+        the standard v4 headers.
+      operationId: uploadIosHealthMetrics
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - in: header
+          name: X-Chronicle-Device-Id
+          required: true
+          description: Chronicle app-instance ID generated and encrypted by the mobile app.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              maxItems: 10000
+              items:
+                $ref: '#/components/schemas/AndroidHealthMetricEvent'
+      responses:
+        '200':
+          description: Number of records uploaded
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v4/study/{studyId}/participant/{participantId}/ios/ambient-audio:
+    post:
+      tags: [Study]
+      summary: Upload iOS ambient-audio classification events
+      description: |
+        Uploads a batch of ambient-audio classification events produced by the iOS
+        `ambient_audio` collection module. Labels-only by construction: sound is
+        classified ON DEVICE (Apple SoundAnalysis) in short duty-cycled windows and
+        the audio is immediately discarded — each event carries only a sound-class
+        label (music, speech, television, …) with a confidence score and the window
+        bounds. Never any recording, transcript, or raw audio. This is deliberately
+        a DIFFERENT module from the mic-free `audio_activity` module, which never
+        touches the microphone. Opt-in, default OFF. Auth (`X-Api-Key`) and the
+        Chronicle app-instance id (`X-Chronicle-Device-Id`) ride the standard v4
+        headers.
+      operationId: uploadIosAmbientAudio
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - in: header
+          name: X-Chronicle-Device-Id
+          required: true
+          description: Chronicle app-instance ID generated and encrypted by the mobile app.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              maxItems: 10000
+              items:
+                $ref: '#/components/schemas/AmbientAudioClassificationEvent'
+      responses:
+        '200':
+          description: Number of events uploaded
+          content:
+            application/json:
+              schema:
+                type: integer
+
+  /chronicle/v3/study/{studyId}/settings:
+    get:
+      tags: [Study]
+      summary: Get all settings for a study
+      operationId: getStudySettings
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      responses:
+        '200':
+          description: Map of setting type to setting value
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/StudySetting'
+
+  /chronicle/v3/study/{studyId}/settings/type/{settingType}:
+    get:
+      tags: [Study]
+      summary: Get a specific study setting
+      operationId: getStudySetting
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/settingType'
+      responses:
+        '200':
+          description: The study setting
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudySetting'
+    patch:
+      tags: [Study]
+      summary: Update a specific study setting
+      operationId: updateStudySettings
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/settingType'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudySetting'
+      responses:
+        '200':
+          description: OK
+
+  /chronicle/v3/study/{studyId}/settings/audit:
+    get:
+      tags: [Study]
+      summary: Get the settings-change audit trail for a study
+      operationId: getStudySettingsAudit
+      description: >-
+        Append-only audit trail of every study-settings change: who changed which
+        setting type, when, from where, plus the full before/after snapshot and a
+        human-readable (module-granular for DataCollection) change summary. Most
+        recent first.
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Settings audit entries, most recent first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StudySettingsAuditEntry'
+
+  /chronicle/v3/study/{studyId}/settings/acknowledgments:
+    get:
+      tags: [Study]
+      summary: Get the participant collection-acknowledgment trail for a study
+      operationId: getStudyCollectionAcknowledgments
+      description: >-
+        Append-only record of when each participant acknowledged each newly-enabled
+        collection module on-device (collection loop closure design §5.3). Surfaced in
+        the web audit view alongside the settings audit; a sibling feed so the
+        immutable settings-audit schema stays unchanged. Most recent first.
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Acknowledgment entries, most recent first
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CollectionAcknowledgmentEntry'
+
+  /chronicle/v3/study/{studyId}/settings/sensors:
+    get:
+      tags: [Study]
+      summary: Get enabled sensor types for a study
+      operationId: getStudySensors
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      responses:
+        '200':
+          description: Set of enabled sensor types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+
+  /chronicle/v3/study/{studyId}/settings/type/AndroidSensor:
+    get:
+      tags: [Study]
+      summary: Get Android sensor settings for a study
+      operationId: getAndroidSensorSettings
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      responses:
+        '200':
+          description: Android sensor setting
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AndroidSensorSetting'
+
+  /chronicle/v3/study/{studyId}/settings/type/Encryption:
+    get:
+      tags: [Study]
+      summary: Get envelope-encryption settings for a study
+      description: |
+        Returns the study's `StudyEncryptionSetting` (HIPAA-2028 "W2"). The Android
+        app reads this to decide whether to seal uploads via the encrypted endpoint
+        and to obtain the RSA public key (`publicKeyPem`) and `keyId` to wrap each
+        batch's AES-256-GCM content key against. Only the public half is exposed here;
+        the matching private key lives in Vault and never leaves the server.
+      operationId: getStudyEncryptionSetting
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      responses:
+        '200':
+          description: Study encryption setting
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudyEncryptionSetting'
+
+  /chronicle/v3/study/{studyId}/data-collection/:
+    put:
+      tags: [Study]
+      summary: Set data collection settings for a study
+      operationId: setChronicleDataCollectionSettings
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChronicleDataCollectionSettings'
+      responses:
+        '200':
+          description: OK
+
+  /chronicle/v3/study/{studyId}/devices:
+    get:
+      tags: [Study]
+      summary: Get app-device instances and enrollment events for a study
+      operationId: getStudyDevices
+      description: |
+        Returns deduped mobile app-device instances grouped by participant. Each
+        instance includes its enrollment event trail, so clients can display
+        repeated enrollment of one app instance separately from multiple app
+        instances for one participant.
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      responses:
+        '200':
+          description: Map of participant ID to app-device instance list
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/StudyDeviceInstance'
+
+  /chronicle/v3/study/{studyId}/android/sensors/availability:
+    get:
+      tags: [Study]
+      summary: Get sensor availability for all devices in a study
+      operationId: getStudySensorAvailability
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      responses:
+        '200':
+          description: List of sensor availability reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AndroidDeviceSensorAvailability'
+
+  /chronicle/v3/study/{studyId}/participants/stats:
+    get:
+      tags: [Study]
+      summary: Get participant statistics for a study
+      operationId: getParticipantStats
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      responses:
+        '200':
+          description: Map of participant ID to stats
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/ParticipantStats'
+
+  /chronicle/v3/study/{studyId}/participants/ios/upload-status:
+    get:
+      tags: [Study]
+      summary: Get server-observed iOS upload status for study participants
+      operationId: getIosUploadStatus
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      responses:
+        '200':
+          description: Map of participant ID to iOS upload status
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/IosUploadStatus'
+
+  /chronicle/v3/study/{studyId}/participants/data:
+    get:
+      tags: [Study]
+      summary: Get participant data for a study
+      operationId: getParticipantsData
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - name: dataType
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: participantIds
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: startDateTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDateTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Participant data rows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  # ==========================================================================
+  # Survey API — /chronicle/v3/survey
+  # ==========================================================================
+  /chronicle/v3/survey/{studyId}/participant/{participantId}/device-usage:
+    get:
+      tags: [Survey]
+      summary: Get device usage survey data for a participant
+      operationId: getDeviceUsageSurveyData
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - name: startDateTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDateTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: thresholdInSeconds
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Device usage data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceUsage'
+
+  /chronicle/v3/survey/{studyId}/filtered:
+    get:
+      tags: [Survey]
+      summary: Get apps filtered from app usage survey for a study
+      operationId: getAppsFilteredForStudyAppUsageSurvey
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      responses:
+        '200':
+          description: Collection of filtered app package names
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+    put:
+      tags: [Survey]
+      summary: Set the full list of filtered apps for a study
+      operationId: setAppsFilteredForStudyAppUsageSurvey
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+              uniqueItems: true
+      responses:
+        '200':
+          description: OK
+    patch:
+      tags: [Survey]
+      summary: Add apps to the filtered list
+      operationId: filterAppForStudyAppUsageSurvey
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+              uniqueItems: true
+      responses:
+        '200':
+          description: OK
+    delete:
+      tags: [Survey]
+      summary: Remove apps from the filtered list (allow them)
+      operationId: allowAppForStudyAppUsageSurvey
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+              uniqueItems: true
+      responses:
+        '200':
+          description: OK
+
+  /chronicle/v3/survey/{studyId}/participant/{participantId}/app-usage:
+    get:
+      tags: [Survey]
+      summary: Get app usage survey data for a participant
+      operationId: getAppUsageSurveyData
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - name: startDateTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDateTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: thresholdInSeconds
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of app usage data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppUsage'
+    post:
+      tags: [Survey]
+      summary: Submit app usage survey
+      operationId: submitAppUsageSurvey
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AppUsage'
+      responses:
+        '200':
+          description: OK
+
+  /chronicle/v3/survey/{studyId}/app-usage-frequency:
+    get:
+      tags: [Survey]
+      summary: Get the study's app-usage survey frequency (participant-readable)
+      description: >-
+        Returns DAILY vs HOURLY so the participant survey page renders the matching variant.
+        Unauthenticated, study-scoped, RLS-enforced; defaults to DAILY when unset.
+      operationId: getAppUsageFrequency
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      responses:
+        '200':
+          description: The study's app-usage survey frequency
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppUsageFrequencyResponse'
+
+  /chronicle/v3/survey/{studyId}/questionnaire:
+    post:
+      tags: [Survey]
+      summary: Create a questionnaire for a study
+      operationId: createQuestionnaire
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Questionnaire'
+      responses:
+        '200':
+          description: UUID of the created questionnaire
+          content:
+            application/json:
+              schema:
+                type: string
+                format: uuid
+    get:
+      tags: [Survey]
+      summary: Get all questionnaires for a study
+      operationId: getStudyQuestionnaires
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      responses:
+        '200':
+          description: List of questionnaires
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Questionnaire'
+
+  /chronicle/v3/survey/{studyId}/questionnaire/{questionnaireId}:
+    get:
+      tags: [Survey]
+      summary: Get a specific questionnaire
+      operationId: getQuestionnaire
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/questionnaireId'
+      responses:
+        '200':
+          description: The questionnaire
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Questionnaire'
+    patch:
+      tags: [Survey]
+      summary: Update a questionnaire
+      operationId: updateQuestionnaire
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/questionnaireId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuestionnaireUpdate'
+      responses:
+        '200':
+          description: OK
+    delete:
+      tags: [Survey]
+      summary: Delete a questionnaire
+      operationId: deleteQuestionnaire
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/questionnaireId'
+      responses:
+        '200':
+          description: OK
+
+  /chronicle/v3/survey/{studyId}/participant/{participantId}/questionnaire/{questionnaireId}:
+    post:
+      tags: [Survey]
+      summary: Submit responses to a questionnaire
+      operationId: submitQuestionnaireResponses
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - $ref: '#/components/parameters/questionnaireId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/QuestionnaireResponse'
+      responses:
+        '200':
+          description: OK
+
+  /chronicle/v3/survey/{studyId}/questionnaire/{questionnaireId}/data:
+    get:
+      tags: [Survey]
+      summary: Get questionnaire responses
+      operationId: getQuestionnaireResponses
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/questionnaireId'
+        - name: fileType
+          in: query
+          schema:
+            type: string
+            enum: [csv, json]
+      responses:
+        '200':
+          description: Questionnaire response data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+
+  # ==========================================================================
+  # Time Use Diary API — /chronicle/v3/time-use-diary
+  # ==========================================================================
+  /chronicle/v3/time-use-diary/{studyId}/participant/{participantId}:
+    post:
+      tags: [TimeUseDiary]
+      summary: Submit a time-use diary
+      operationId: submitTimeUseDiary
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/TimeUseDiaryResponse'
+      responses:
+        '200':
+          description: UUID of the submission
+          content:
+            application/json:
+              schema:
+                type: string
+                format: uuid
+    get:
+      tags: [TimeUseDiary]
+      summary: Get TUD submission IDs by date for a participant
+      operationId: getParticipantTUDSubmissionIdsByDate
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - name: startDateTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDateTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Map of date to submission UUIDs
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+
+  /chronicle/v3/time-use-diary/{studyId}/ids:
+    get:
+      tags: [TimeUseDiary]
+      summary: Get all TUD submission IDs by date for a study
+      operationId: getStudyTUDSubmissionIdsByDate
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - name: startDateTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDateTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Map of date to submission UUIDs
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+                    format: uuid
+
+  /chronicle/v3/time-use-diary/{studyId}/settings:
+    get:
+      tags: [TimeUseDiary]
+      summary: Get the study's Time Use Diary variant settings (participant-readable)
+      description: >-
+        Returns the non-sensitive TUD variant flags (OSU/Sherbrooke question set, clock format,
+        locale) so the participant web diary renders the study's configured instrument.
+        Unauthenticated, study-scoped, RLS-enforced.
+      operationId: getTimeUseDiarySettings
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      responses:
+        '200':
+          description: The study's Time Use Diary settings
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeUseDiarySettingsResponse'
+
+  /chronicle/v3/time-use-diary/{studyId}/data:
+    get:
+      tags: [TimeUseDiary]
+      summary: Get TUD submissions for a study
+      operationId: getStudyTUDSubmissions
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - name: dataType
+          in: query
+          schema:
+            type: string
+        - name: startDateTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDateTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: TUD submission data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: array
+                  items:
+                    type: object
+
+  /chronicle/v3/time-use-diary/{studyId}/participants/data:
+    get:
+      tags: [TimeUseDiary]
+      summary: Get TUD submissions for specific participants
+      operationId: getParticipantsTudSubmissions
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - name: participantIds
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: dataType
+          in: query
+          schema:
+            type: string
+        - name: startDateTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDateTime
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: TUD submission data
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: array
+                  items:
+                    type: object
+
+  # ==========================================================================
+  # Candidate API — /chronicle/v3/candidate
+  # ==========================================================================
+  /chronicle/v3/candidate:
+    post:
+      tags: [Candidate]
+      summary: Register a new candidate
+      operationId: registerCandidate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Candidate'
+      responses:
+        '200':
+          description: UUID of the registered candidate
+          content:
+            application/json:
+              schema:
+                type: string
+                format: uuid
+
+  # ==========================================================================
+  # Permissions API — /chronicle/v3/permissions
+  # ==========================================================================
+  /chronicle/v3/permissions:
+    patch:
+      tags: [Permissions]
+      summary: Update an ACL
+      operationId: updateAcl
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AclData'
+      responses:
+        '200':
+          description: OK
+    post:
+      tags: [Permissions]
+      summary: Get an ACL for a securable object
+      operationId: getAcl
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AclKey'
+      responses:
+        '200':
+          description: The ACL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Acl'
+
+  /chronicle/v3/permissions/update:
+    patch:
+      tags: [Permissions]
+      summary: Batch update multiple ACLs
+      operationId: updateAcls
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AclData'
+      responses:
+        '200':
+          description: OK
+
+  /chronicle/v3/permissions/bulk:
+    post:
+      tags: [Permissions]
+      summary: Get ACLs for multiple securable objects
+      operationId: getAcls
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AclKey'
+              uniqueItems: true
+      responses:
+        '200':
+          description: Set of ACLs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Acl'
+
+  /chronicle/v3/permissions/explain:
+    post:
+      tags: [Permissions]
+      summary: Get an explanation of permissions for an object
+      operationId: getAclExplanation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AclKey'
+      responses:
+        '200':
+          description: ACL explanations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AclExplanation'
+
+  # ==========================================================================
+  # Authorizations API — /chronicle/v3/authorizations
+  # ==========================================================================
+  /chronicle/v3/authorizations:
+    post:
+      tags: [Authorizations]
+      summary: Check authorizations for a set of access checks
+      operationId: checkAuthorizations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AccessCheck'
+              uniqueItems: true
+      responses:
+        '200':
+          description: Authorization results
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Authorization'
+    get:
+      tags: [Authorizations]
+      summary: Get accessible objects of a given type and permission
+      operationId: getAccessibleObjects
+      parameters:
+        - name: objectType
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: permission
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: pagingToken
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Search result with accessible objects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizedObjectsSearchResult'
+
+  # ==========================================================================
+  # Admin API — /chronicle/v3/admin
+  # ==========================================================================
+  /chronicle/v3/admin/event-storage:
+    get:
+      tags: [Admin]
+      summary: Trigger event storage migration
+      operationId: moveToEventStorage
+      responses:
+        '200':
+          description: OK
+
+  /chronicle/v3/admin/reload/cache:
+    get:
+      tags: [Admin]
+      summary: Reload all caches
+      operationId: reloadCache
+      responses:
+        '200':
+          description: OK
+
+  /chronicle/v3/admin/reload/cache/{name}:
+    get:
+      tags: [Admin]
+      summary: Reload a specific cache by name
+      operationId: reloadCacheByName
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+
+  /chronicle/v3/admin/principals/{id}:
+    get:
+      tags: [Admin]
+      summary: Get principals for a specific user
+      operationId: getUserPrincipals
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Set of principals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Principal'
+
+  /chronicle/v3/admin/principals:
+    get:
+      tags: [Admin]
+      summary: Get principals for the current user
+      operationId: getCurrentUserPrincipals
+      responses:
+        '200':
+          description: Set of principals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Principal'
+
+  # ==========================================================================
+  # Organization API — /chronicle/v3/organization
+  # ==========================================================================
+  /chronicle/v3/organization:
+    post:
+      tags: [Organization]
+      summary: Create a new organization
+      operationId: createOrganization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Organization'
+      responses:
+        '200':
+          description: UUID of the created organization
+          content:
+            application/json:
+              schema:
+                type: string
+                format: uuid
+    get:
+      tags: [Organization]
+      summary: Get all organizations
+      operationId: getOrganizations
+      responses:
+        '200':
+          description: List of organizations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Organization'
+
+  /chronicle/v3/organization/{organizationId}:
+    get:
+      tags: [Organization]
+      summary: Get an organization by ID
+      operationId: getOrganization
+      parameters:
+        - $ref: '#/components/parameters/organizationId'
+      responses:
+        '200':
+          description: The organization
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+
+  # ==========================================================================
+  # Notification API — /chronicle/v3/notification
+  # ==========================================================================
+  /chronicle/v3/notification/{studyId}/principal/{principalId}/phone-numbers:
+    get:
+      tags: [Notification]
+      summary: Get a researcher's phone number
+      operationId: getResearcherPhoneNumber
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/principalId'
+      responses:
+        '200':
+          description: Phone number string
+          content:
+            application/json:
+              schema:
+                type: string
+
+  /chronicle/v3/notification/{studyId}/principal/{principalId}/phone-numbers/{phoneNumber}:
+    put:
+      tags: [Notification]
+      summary: Set a researcher's phone number
+      operationId: setResearcherPhoneNumber
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/principalId'
+        - name: phoneNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+
+  /chronicle/v3/notification/{studyId}/principal/{principalId}/phone-numbers/{phoneNumber}/verify:
+    post:
+      tags: [Notification]
+      summary: Verify a researcher's phone number with confirmation code
+      operationId: verifyResearcherPhoneNumber
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/principalId'
+        - name: phoneNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: OK
+    get:
+      tags: [Notification]
+      summary: Check if a researcher's phone number is verified
+      operationId: isResearcherPhoneNumberVerified
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/principalId'
+        - name: phoneNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Whether the phone number is verified
+          content:
+            application/json:
+              schema:
+                type: boolean
+
+  /chronicle/v3/notification/{studyId}/principal/{principalId}/notifications:
+    get:
+      tags: [Notification]
+      summary: Get researcher notification settings
+      operationId: getResearcherNotificationSettings
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/principalId'
+      responses:
+        '200':
+          description: Map of notification type to delivery types
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+    put:
+      tags: [Notification]
+      summary: Set researcher notification settings
+      operationId: setResearcherNotificationSettings
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/principalId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: string
+      responses:
+        '200':
+          description: OK
+
+  /chronicle/v3/notification/{studyId}/principal/{principalId}/notifications/{notificationType}:
+    get:
+      tags: [Notification]
+      summary: Get delivery types for a specific notification type
+      operationId: getResearcherNotificationSetting
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/principalId'
+        - name: notificationType
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Set of delivery types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+    put:
+      tags: [Notification]
+      summary: Set delivery types for a specific notification type
+      operationId: setResearcherNotificationSetting
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/principalId'
+        - name: notificationType
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+              uniqueItems: true
+      responses:
+        '200':
+          description: OK
+
+  /chronicle/v3/notification/{studyId}:
+    post:
+      tags: [Notification]
+      summary: Send notifications to participants
+      operationId: sendNotifications
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/ParticipantNotification'
+      responses:
+        '200':
+          description: OK
+
+  /chronicle/v3/notification/status:
+    post:
+      tags: [Notification]
+      summary: Webhook callback for notification delivery status updates
+      operationId: updateNotificationStatus
+      parameters:
+        - name: MessageSid
+          in: query
+          schema:
+            type: string
+        - name: MessageStatus
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+
+  # ==========================================================================
+  # Principal API — /chronicle/principal
+  # ==========================================================================
+  /chronicle/principal:
+    post:
+      tags: [Principal]
+      summary: Get a securable principal
+      operationId: getSecurablePrincipal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Principal'
+      responses:
+        '200':
+          description: The securable principal
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SecurablePrincipal'
+
+  /chronicle/principal/users:
+    get:
+      tags: [Principal]
+      summary: Get all users
+      operationId: getAllUsers
+      responses:
+        '200':
+          description: Map of user ID to user
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/ChronicleUserProfile'
+    post:
+      tags: [Principal]
+      summary: Get users by ID
+      operationId: getUsers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+              uniqueItems: true
+      responses:
+        '200':
+          description: Map of user ID to user
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/ChronicleUserProfile'
+
+  /chronicle/principal/users/{userId}:
+    get:
+      tags: [Principal]
+      summary: Get a user by ID
+      operationId: getUser
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChronicleUserProfile'
+    delete:
+      tags: [Principal]
+      summary: Delete a user account
+      operationId: deleteUserAccount
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+
+  /chronicle/principal/users/search:
+    post:
+      tags: [Principal]
+      summary: Search for users
+      operationId: searchUsers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserSearchFields'
+      responses:
+        '200':
+          description: Map of user ID to user
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/ChronicleUserProfile'
+
+  /chronicle/principal/roles/current:
+    get:
+      tags: [Principal]
+      summary: Get current user's roles
+      operationId: getCurrentRoles
+      responses:
+        '200':
+          description: Set of securable principals (roles)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SecurablePrincipal'
+
+  /chronicle/principal/roles:
+    get:
+      tags: [Principal]
+      summary: Get all available roles
+      operationId: getAvailableRoles
+      responses:
+        '200':
+          description: Map of AclKey to Role
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/Role'
+
+  /chronicle/principal/sync:
+    get:
+      tags: [Principal]
+      summary: Sync the calling user's principal
+      operationId: syncCallingUser
+      responses:
+        '200':
+          description: OK
+
+  /chronicle/principal/update:
+    post:
+      tags: [Principal]
+      summary: Add a principal to another principal (e.g., add role to user)
+      operationId: addPrincipalToPrincipal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DirectedAclKeys'
+      responses:
+        '200':
+          description: OK
+    delete:
+      tags: [Principal]
+      summary: Remove a principal from another principal
+      operationId: removePrincipalFromPrincipal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DirectedAclKeys'
+      responses:
+        '200':
+          description: OK
+
+# ---------------------------------------------------------------------------
+# Components
+# ---------------------------------------------------------------------------
+components:
+  parameters:
+    studyId:
+      name: studyId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    organizationId:
+      name: organizationId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    participantId:
+      name: participantId
+      in: path
+      required: true
+      schema:
+        type: string
+    sourceDeviceId:
+      name: sourceDeviceId
+      in: path
+      required: true
+      description: Legacy path name for the Chronicle app-instance ID.
+      schema:
+        type: string
+    chronicleDeviceIdHeader:
+      name: X-Chronicle-Device-Id
+      in: header
+      required: true
+      description: Chronicle app-instance ID generated and encrypted by the mobile app.
+      schema:
+        type: string
+    mobileApiKeyHeader:
+      name: X-Api-Key
+      in: header
+      required: true
+      description: Per-device API key bound to the enrolled study, participant, and app instance.
+      schema:
+        type: string
+    questionnaireId:
+      name: questionnaireId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    settingType:
+      name: settingType
+      in: path
+      required: true
+      schema:
+        type: string
+    principalId:
+      name: principalId
+      in: path
+      required: true
+      schema:
+        type: string
+
+  schemas:
+    EnrollmentResponse:
+      type: object
+      description: |
+        Returned by mobile enrollment endpoints. The request identifies a
+        pseudonymous app-device instance; the response identifies both the
+        deduped server device record and the individual enrollment event.
+
+        Servers that support per-device API keys populate `apiKey`; legacy
+        servers may return `null`.
+
+        For backward compatibility with the legacy upstream server, clients
+        also accept a bare UUID string response and treat it as
+        `{chronicleId: <uuid>, enrollmentId: null, apiKey: null}`.
+      required:
+        - chronicleId
+      properties:
+        chronicleId:
+          type: string
+          format: uuid
+          description: Server-assigned deduped app-device instance UUID.
+        enrollmentId:
+          type: string
+          format: uuid
+          nullable: true
+          description: Server-assigned UUID for this enrollment event.
+        apiKey:
+          type: string
+          nullable: true
+          description: |
+            Per-device API key bound to (studyId, participantId, chronicleId).
+            Sent as `X-Api-Key` for subsequent uploads to this server. Shown ONCE.
+
+    StudyParticipantPolicy:
+      type: object
+      description: Study-specific informed-consent and privacy notice controlled by the responsible institution.
+      required:
+        - responsibleInstitution
+        - serverOperator
+        - researchContact
+        - purpose
+        - expectedDuration
+        - procedures
+        - foreseeableRisks
+        - expectedBenefits
+        - dataUseAndSharing
+        - retentionAndDeletion
+        - privacyPolicyUrl
+        - withdrawalUrl
+        - version
+        - effectiveAt
+      properties:
+        responsibleInstitution:
+          type: string
+        serverOperator:
+          type: string
+        researchContact:
+          type: string
+        purpose:
+          type: string
+        expectedDuration:
+          type: string
+        procedures:
+          type: string
+        foreseeableRisks:
+          type: string
+        expectedBenefits:
+          type: string
+        dataUseAndSharing:
+          type: string
+        retentionAndDeletion:
+          type: string
+        privacyPolicyUrl:
+          type: string
+          format: uri
+          pattern: '^https://'
+        withdrawalUrl:
+          type: string
+          format: uri
+          pattern: '^https://'
+        consentDocumentUrl:
+          type: string
+          format: uri
+          pattern: '^https://'
+          nullable: true
+        version:
+          type: string
+        effectiveAt:
+          type: string
+          format: date-time
+
+    EnrollmentManifest:
+      type: object
+      description: Authoritative disclosure snapshot a participant reviews before enrollment.
+      required:
+        - schemaVersion
+        - serverOrigin
+        - studyId
+        - participantId
+        - studyTitle
+        - studyDescription
+        - participantPolicy
+        - collectionSettings
+        - settingsVersion
+        - issuedAt
+        - expiresAt
+      properties:
+        schemaVersion:
+          type: integer
+          enum: [1]
+        serverOrigin:
+          type: string
+          format: uri
+          pattern: '^https://[^/]+/?$'
+        studyId:
+          type: string
+          format: uuid
+        participantId:
+          type: string
+        studyTitle:
+          type: string
+        studyDescription:
+          type: string
+        participantPolicy:
+          $ref: '#/components/schemas/StudyParticipantPolicy'
+        collectionSettings:
+          $ref: '#/components/schemas/AndroidDataCollectionSetting'
+        settingsVersion:
+          type: integer
+          minimum: 1
+        issuedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+
+    EnrollmentPreviewResponse:
+      type: object
+      required: [manifest, manifestDigest]
+      properties:
+        manifest:
+          $ref: '#/components/schemas/EnrollmentManifest'
+        manifestDigest:
+          type: string
+          pattern: '^[0-9a-f]{64}$'
+
+    EnrollmentWithdrawalResponse:
+      type: object
+      description: |
+        Accepted participant self-service withdrawal. `requestId` is the exact
+        client-supplied UUID bound to the authenticated credential, and exact
+        retries observe the same response. The first winning withdrawal owns
+        the durable deletion job. A later request from another device records
+        `alreadyWithdrawn: true` and may return no deletion job IDs rather than
+        claiming the first device's operation.
+      required:
+        - requestId
+        - status
+        - deletionJobIds
+        - alreadyWithdrawn
+      properties:
+        requestId:
+          type: string
+          format: uuid
+          description: Client-generated withdrawal request UUID, stable across retries.
+        status:
+          type: string
+          description: Always `accepted` when the request succeeds.
+        deletionJobIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: >-
+            Deletion jobs owned by this exact withdrawal request. Empty when
+            `alreadyWithdrawn` is true and another request already owns the
+            participant's durable erasure operation.
+        alreadyWithdrawn:
+          type: boolean
+          description: True when the participant was already NOT_ENROLLED before this call.
+
+    DeviceEnrollmentEvent:
+      type: object
+      description: One enrollment event for a deduped app-device instance.
+      properties:
+        enrollmentId:
+          type: string
+          format: uuid
+          nullable: true
+        enrolledAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    StudyDeviceInstance:
+      type: object
+      description: Deduped app-device instance plus enrollment event trail.
+      properties:
+        deviceId:
+          type: string
+          format: uuid
+          description: Server-assigned deduped app-device instance UUID.
+        deviceType:
+          type: string
+        sourceDevice:
+          type: object
+          description: Sanitized mobile device metadata. Hardware identifiers and messaging tokens are stripped before storage.
+          additionalProperties: true
+        enrollments:
+          type: array
+          items:
+            $ref: '#/components/schemas/DeviceEnrollmentEvent'
+
+    Study:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        organizationId:
+          type: string
+          format: uuid
+        version:
+          type: string
+        contact:
+          type: string
+        group:
+          type: string
+        lat:
+          type: number
+          format: double
+        lon:
+          type: number
+          format: double
+        notificationsEnabled:
+          type: boolean
+        phoneNumber:
+          type: string
+        storage:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        startedAt:
+          type: string
+          format: date-time
+        endedAt:
+          type: string
+          format: date-time
+
+    StudyUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        contact:
+          type: string
+        version:
+          type: string
+        group:
+          type: string
+        notificationsEnabled:
+          type: boolean
+        lat:
+          type: number
+          format: double
+        lon:
+          type: number
+          format: double
+
+    StudySetting:
+      type: object
+      description: Polymorphic study setting (uses @class discriminator)
+      properties:
+        "@class":
+          type: string
+      additionalProperties: true
+
+    AndroidSensorSetting:
+      type: object
+      properties:
+        sensors:
+          type: array
+          items:
+            type: string
+        samplingRate:
+          type: integer
+
+    ChronicleDataCollectionSettings:
+      type: object
+      additionalProperties: true
+
+    CollectionModuleId:
+      type: string
+      description: >-
+        Stable lowercase snake_case identifier for a data collection module
+        (design §1A.2 / §1A.3). Reserved IDs freeze the namespace for future
+        modules. Unknown IDs are ignored on read, never fatal.
+      enum:
+        - usage_events
+        - device_lifecycle
+        - user_identification
+        - upload_telemetry
+        - sensor_availability
+        - battery_telemetry
+        # Sensing expansion — interaction salience (content-free metadata via AccessibilityService).
+        - interaction_events
+        # The within-app Activity/screen class, split out of usage_events as an opt-in field gate.
+        - in_app_activity_class
+        # Per-sensor hardware modules (per-sensor consent redesign, 2026-06-11): each
+        # AndroidSensorType is its own first-class module — the study marks each
+        # required/optional/unavailable and the participant consents to each individually.
+        # Each carries its own sampling rate + duty cycle on the module's sensorPolicy.
+        - sensor_accelerometer
+        - sensor_gyroscope
+        - sensor_magnetometer
+        - sensor_gravity
+        - sensor_linear_acceleration
+        - sensor_rotation_vector
+        - sensor_step_counter
+        - sensor_light
+        - sensor_proximity
+        - sensor_significant_motion
+        - sensor_tilt_detector
+        - sensor_screen_orientation
+        - sensor_samsung_grip_wifi
+        - sensor_samsung_motion
+        - time_use_diary
+        - questionnaire
+        - app_inventory
+        # Sensing expansion (docs/SENSING-EXPANSION-DESIGN.md) — app-audio (mic-free) +
+        # content-free notification activity. Active, opt-in (default OFF).
+        - audio_activity
+        - audio_content
+        - notification_activity
+        # Retired: the hardware_sensors umbrella was split into the per-sensor sensor_*
+        # modules above. Kept only as a decode alias so legacy persisted settings/acks
+        # still deserialize.
+        - hardware_sensors
+        # Sensing expansion phase 2 (docs/SENSING-EXPANSION-DESIGN.md) — active, opt-in.
+        # sleep + health_connect default ON; activity_recognition / connectivity_state /
+        # app_network_usage / device_settings default OFF. Each is its own uploadable stream.
+        - sleep
+        - activity_recognition
+        - health_connect
+        - connectivity_state
+        - app_network_usage
+        - device_settings
+        # Reserved IDs — namespace-frozen for future modules, no implementation yet. Kept in
+        # sync with the chronicle-models CollectionModuleId enum (the source of truth).
+        - gaze_tracking
+        - interaction_content
+        - location
+        - communication_log
+
+    CollectionCadence:
+      type: object
+      description: How often a collection or upload action runs.
+      properties:
+        intervalSeconds:
+          type: integer
+          format: int64
+          description: Base interval between actions, in seconds. Must be positive.
+        jitterSeconds:
+          type: integer
+          format: int64
+          description: Random spread added to the interval; non-negative, <= intervalSeconds.
+
+    BatteryPolicy:
+      type: object
+      description: Battery-aware collection policy.
+      properties:
+        minLevelPercent:
+          type: integer
+          description: Minimum battery level (percent) for the module to run.
+        stopBelowCriticalPercent:
+          type: integer
+          description: Battery level (percent) at or below which the module stops entirely.
+        degradeInPowerSave:
+          type: boolean
+          description: Whether the module degrades (reduced cadence) in OS power-save mode.
+
+    NetworkPolicy:
+      type: object
+      description: Network constraints applied to a module's upload behavior.
+      properties:
+        requireUnmetered:
+          type: boolean
+          description: Require an unmetered (e.g. Wi-Fi) connection before uploading.
+        requireConnected:
+          type: boolean
+          description: Require any connected network before uploading.
+
+    CollectionModuleSetting:
+      type: object
+      description: >-
+        Per-module configuration entry inside an AndroidDataCollectionSetting.
+        Carries no apiKey, signing secret, or participantId — pure configuration.
+      properties:
+        enabled:
+          type: boolean
+          description: >-
+            Whether the module is active. Privacy-sensitive modules are never
+            enabled implicitly.
+        required:
+          type: boolean
+          description: >-
+            Whether the module is mandatory for study participation (per-module
+            consent design §3.1). Meaningful only when enabled. Required modules
+            must be accepted to enroll and cannot be self-disabled in the Data
+            Sharing surface; optional modules (the default) are participant-toggleable.
+            Defaults false for legacy settings.
+        collectionCadence:
+          $ref: '#/components/schemas/CollectionCadence'
+        uploadCadence:
+          $ref: '#/components/schemas/CollectionCadence'
+        batteryPolicy:
+          $ref: '#/components/schemas/BatteryPolicy'
+        networkPolicy:
+          $ref: '#/components/schemas/NetworkPolicy'
+        sensorPolicy:
+          allOf:
+            - $ref: '#/components/schemas/AndroidSensorSetting'
+          nullable: true
+          description: >-
+            Per-sensor sampling policy (rate Hz + duty cycle). Only the per-sensor
+            sensor_* modules populate this — each carries its own rate/duty (web-editable,
+            mobile read-only); every non-sensor module leaves it null. Also decodes the
+            legacy hardware_sensors.sensorPolicy shape for old data.
+        healthConnectRecordTypes:
+          type: array
+          uniqueItems: true
+          description: Exact Health Connect record families approved for this study; valid only on health_connect.
+          items:
+            type: string
+            enum:
+              - steps
+              - distance
+              - heart_rate
+              - total_calories_burned
+              - active_calories_burned
+              - floors_climbed
+              - resting_heart_rate
+              - oxygen_saturation
+              - respiratory_rate
+              - sleep
+              - exercise
+              - heart_rate_variability
+              - body_temperature
+              - skin_temperature
+        disableDisposition:
+          allOf:
+            - $ref: '#/components/schemas/CollectionDataDisposition'
+          nullable: true
+          description: >-
+            For a mid-study disable (enabled=false), the researcher-chosen disposition
+            for data already collected on-device but not yet uploaded. Set only when
+            enabled=false; left null (and ignored by the device) while the module is
+            enabled. The device acts on it only on the ACTIVE -> INACTIVE transition.
+
+    CollectionDataDisposition:
+      type: string
+      description: >-
+        What the device does with a module's already-collected-but-unsent data when a
+        researcher disables that module mid-study (collection loop closure design
+        §5.1). Default is flush_then_stop (no data loss).
+      enum:
+        - flush_then_stop   # drain & upload pending queue, then stop. No data loss.
+        - discard_and_stop  # drop unsent queue, then stop. Intentional data loss.
+        - hold_pending      # stop but retain pending queue locally (capped) until re-enable.
+
+    CollectionConsentTrigger:
+      type: string
+      description: >-
+        What produced a participant's per-module consent decision snapshot
+        (per-module consent design §3.3).
+      enum:
+        - ENROLLMENT          # decisions from the enrollment orientation wizard.
+        - PARTICIPANT_TOGGLE  # a later self-service toggle in the Data Sharing surface.
+        - SETTINGS_CHANGE     # re-decision after a study-setting change made a module required.
+        - WITHDRAWAL          # the participant left the study rather than accept a required module.
+
+    CollectionAcknowledgment:
+      type: object
+      description: >-
+        A participant's on-device per-module consent decision snapshot — the request
+        body the Android app POSTs when its consent picture changes (design §5.2,
+        generalized to per-module consent design §3.3). Records the modules accepted and
+        declined in this snapshot plus what triggered the decision.
+      required:
+        - acknowledgedModules
+        - acknowledgedAt
+      properties:
+        acknowledgedModules:
+          type: array
+          description: The modules the participant accepted in this snapshot.
+          items:
+            $ref: '#/components/schemas/CollectionModuleId'
+        acknowledgedAt:
+          type: string
+          format: date-time
+          description: >-
+            Device-reported wall-clock time of the decision. Advisory only — the
+            server stamps its own authoritative receipt time on persist.
+        declinedModules:
+          type: array
+          description: The modules the participant declined in this snapshot (defaults empty).
+          items:
+            $ref: '#/components/schemas/CollectionModuleId'
+        unavailableModules:
+          type: array
+          description: >-
+            Enabled sensor modules the device reported as physically unavailable in this
+            snapshot (defaults empty). Non-sensor modules are invalid here.
+          items:
+            $ref: '#/components/schemas/CollectionModuleId'
+        trigger:
+          allOf:
+            - $ref: '#/components/schemas/CollectionConsentTrigger'
+          description: What produced this decision (defaults ENROLLMENT for legacy payloads).
+        appVersion:
+          type: string
+          nullable: true
+          description: Optional app version string, for diagnostics.
+        settingsVersion:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Server-controlled DataCollection revision whose policy was decided.
+        disclosureVersion:
+          type: string
+          nullable: true
+          description: Study participant-policy version reviewed with this decision.
+        manifestDigest:
+          type: string
+          pattern: '^[0-9a-f]{64}$'
+          nullable: true
+          description: Digest of the authoritative enrollment manifest reviewed by the participant.
+
+    CollectionAcknowledgmentEntry:
+      type: object
+      description: >-
+        One append-only record in a study's participant collection-acknowledgment
+        trail, surfaced to researchers alongside the immutable settings audit
+        (design §5.3, §11). recordedAt is the server-stamped authoritative anchor;
+        acknowledgedAt is the advisory device-reported time.
+      properties:
+        id:
+          type: string
+          format: uuid
+        studyId:
+          type: string
+          format: uuid
+        participantId:
+          type: string
+        sourceDeviceId:
+          type: string
+        acknowledgedModules:
+          type: array
+          items:
+            $ref: '#/components/schemas/CollectionModuleId'
+        acknowledgedAt:
+          type: string
+          format: date-time
+          description: Device-reported acknowledgment time (advisory).
+        declinedModules:
+          type: array
+          description: The modules the participant declined in this snapshot (per-module consent design §3.3).
+          items:
+            $ref: '#/components/schemas/CollectionModuleId'
+        trigger:
+          allOf:
+            - $ref: '#/components/schemas/CollectionConsentTrigger'
+          description: What produced this decision (enrollment / toggle / settings-change / withdrawal).
+        recordedAt:
+          type: string
+          format: date-time
+          description: Server-stamped authoritative receipt time (the audit anchor).
+        appVersion:
+          type: string
+          nullable: true
+        settingsVersion:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: Server-controlled DataCollection revision whose policy was decided.
+        disclosureVersion:
+          type: string
+          nullable: true
+        manifestDigest:
+          type: string
+          pattern: '^[0-9a-f]{64}$'
+          nullable: true
+
+    AndroidDataCollectionSetting:
+      type: object
+      description: >-
+        Generalized Android data collection setting, bound to the DataCollection
+        study setting type (design §1B.2). A polymorphic StudySetting subtype,
+        added additively — it is returned from GET /settings/type/DataCollection
+        and rides the existing @class-discriminated StudySetting mechanism.
+        A missing setting falls back to the legacy AndroidSensor setting.
+      properties:
+        "@class":
+          type: string
+        modules:
+          type: object
+          description: Per-module settings, keyed by CollectionModuleId. Unknown IDs are dropped on read.
+          additionalProperties:
+            $ref: '#/components/schemas/CollectionModuleSetting'
+        version:
+          type: integer
+          description: Schema discriminator for forward migration. Defaults to 2.
+        settingsVersion:
+          type: integer
+          minimum: 1
+          description: Server-controlled revision of the actual settings content. Defaults to 1.
+
+    StudyEncryptionSetting:
+      type: object
+      description: >-
+        Envelope-encryption opt-in for a study (HIPAA-2028 "W2"). A polymorphic
+        StudySetting subtype bound to the `Encryption` study setting type, returned
+        from GET /settings/type/Encryption and riding the existing @class-discriminated
+        StudySetting mechanism. When `enabled`, the Android app uploads via the
+        encrypted endpoint, sealing each batch's content key against `publicKeyPem`
+        (identified by `keyId`). Only the public key is ever exposed; the matching
+        private key lives in Vault and never leaves the server.
+      properties:
+        "@class":
+          type: string
+        enabled:
+          type: boolean
+          default: false
+          description: >-
+            Whether envelope-encrypted uploads are required for this study. Defaults
+            false (legacy plaintext uploads).
+        keyId:
+          type: string
+          description: >-
+            Stable identifier of the active study key pair. Echoed back in each
+            EncryptedEnvelope.keyId so the server selects the matching private key for
+            decryption and supports key rotation.
+        algorithm:
+          type: string
+          description: >-
+            Hybrid envelope algorithm in use (e.g. "RSA-OAEP-256+A256GCM"): RSA-OAEP
+            with SHA-256 for key wrapping plus AES-256-GCM for content.
+        publicKeyPem:
+          type: string
+          description: >-
+            PEM-encoded RSA public key the device wraps each batch's AES-256-GCM
+            content key against. Public key only; the private key lives in Vault.
+
+    EncryptedEnvelope:
+      type: object
+      description: >-
+        One envelope-encrypted batch uploaded to the encrypted Android endpoint
+        (HIPAA-2028 "W2"). Hybrid encryption: a fresh AES-256-GCM content key encrypts
+        the serialized batch (the `ciphertext`, with its GCM tag), and that content key
+        is itself wrapped under the study's RSA public key using RSA-OAEP-SHA256 to form
+        `encryptedKey`. The GCM AAD binds `version|studyId|participantId|payloadType`;
+        it is recomputed identically on both ends from the request context and is NOT
+        transmitted on the wire. The server unwraps `encryptedKey` with the study
+        private key (from Vault), then AES-256-GCM-decrypts `ciphertext` using `iv` and
+        the recomputed AAD, authenticating integrity via the tag.
+      required:
+        - keyId
+        - payloadType
+        - encryptedKey
+        - iv
+        - ciphertext
+      properties:
+        version:
+          type: integer
+          default: 1
+          description: Envelope schema version. Part of the AAD; defaults to 1.
+        alg:
+          type: string
+          default: "RSA-OAEP-256+A256GCM"
+          description: >-
+            Hybrid algorithm identifier: RSA-OAEP with SHA-256 key wrapping plus
+            AES-256-GCM content encryption.
+        keyId:
+          type: string
+          description: >-
+            Identifier of the study key pair used to wrap the content key. Must match
+            the active StudyEncryptionSetting.keyId so the server picks the right
+            private key (supports rotation).
+        payloadType:
+          type: string
+          description: >-
+            Which decrypted store the plaintext batch lands in. Part of the AAD.
+          enum:
+            - sensor
+            - usage
+            - battery
+            - interaction
+            - audio_activity
+            - audio_content
+            - notification_activity
+        encryptedKey:
+          type: string
+          description: >-
+            Base64-encoded AES-256-GCM content key, wrapped under the study RSA public
+            key via RSA-OAEP-SHA256.
+        iv:
+          type: string
+          description: Base64-encoded AES-256-GCM initialization vector (nonce) for this batch.
+        ciphertext:
+          type: string
+          description: >-
+            Base64-encoded AES-256-GCM ciphertext of the serialized batch, with the GCM
+            authentication tag appended.
+        sampleCount:
+          type: integer
+          default: 0
+          description: >-
+            Advisory count of samples sealed in this envelope (for telemetry/sizing).
+            The authoritative count is determined server-side after decryption.
+
+    StudySettingsAuditEntry:
+      type: object
+      description: >-
+        A single immutable entry in a study's settings-change audit trail. Records
+        who changed which setting type, when, and from where, with the full
+        before/after snapshot and a human-readable change summary (module-granular
+        for DataCollection). The backing table is append-only (DELETE/UPDATE revoked
+        from all application roles).
+      properties:
+        id:
+          type: string
+          format: uuid
+        studyId:
+          type: string
+          format: uuid
+        changedBy:
+          type: string
+          description: Principal id of the user who made the change.
+        changedAt:
+          type: string
+          format: date-time
+        sourceIp:
+          type: string
+          nullable: true
+          description: Client IP the change originated from, if known.
+        settingKey:
+          type: string
+          description: The StudySettingType that changed (e.g. DataCollection, AndroidSensor).
+        beforeValue:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Full snapshot of the setting before the change; null on first configuration.
+        afterValue:
+          type: object
+          additionalProperties: true
+          description: Full snapshot of the setting after the change.
+        changeSummary:
+          type: string
+          description: Human-readable summary of what changed.
+
+    ChronicleUserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        nickname:
+          type: string
+          nullable: true
+        givenName:
+          type: string
+          nullable: true
+        familyName:
+          type: string
+          nullable: true
+        username:
+          type: string
+          nullable: true
+        connections:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+        identityUserIds:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+
+    Participant:
+      type: object
+      required:
+        - participantId
+        - candidate
+        - participationStatus
+      properties:
+        participantId:
+          type: string
+        candidate:
+          $ref: '#/components/schemas/Candidate'
+        participationStatus:
+          $ref: '#/components/schemas/ParticipationStatus'
+        participantNotes:
+          type: string
+          nullable: true
+        participantTags:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+
+    ParticipationStatus:
+      type: string
+      enum: [ENROLLED, NOT_ENROLLED, PAUSED, UNKNOWN]
+
+    ParticipantStats:
+      type: object
+      properties:
+        participantId:
+          type: string
+        studyId:
+          type: string
+          format: uuid
+        lastUpload:
+          type: string
+          format: date-time
+        androidLastPing:
+          type: string
+          format: date-time
+        iosLastPing:
+          type: string
+          format: date-time
+        tudSubmissionCount:
+          type: integer
+
+    IosUploadStatus:
+      type: object
+      required:
+        - participantId
+        - committedRows
+        - bufferedBatches
+        - bufferedRecords
+      properties:
+        participantId:
+          type: string
+        committedRows:
+          type: integer
+          format: int64
+        lastCommittedAt:
+          type: string
+          format: date-time
+          nullable: true
+        lastObservationEndAt:
+          type: string
+          format: date-time
+          nullable: true
+        bufferedBatches:
+          type: integer
+          format: int64
+        bufferedRecords:
+          type: integer
+          format: int64
+        lastBufferedUploadAt:
+          type: string
+          format: date-time
+          nullable: true
+
+    SourceDevice:
+      description: Polymorphic mobile source-device enrollment payload.
+      oneOf:
+        - $ref: '#/components/schemas/AndroidDevice'
+        - $ref: '#/components/schemas/IOSDevice'
+      discriminator:
+        propertyName: "@class"
+        mapping:
+          com.openlattice.chronicle.sources.AndroidDevice: '#/components/schemas/AndroidDevice'
+          com.openlattice.chronicle.sources.IOSDevice: '#/components/schemas/IOSDevice'
+
+    AndroidDevice:
+      type: object
+      description: Android source-device enrollment payload.
+      additionalProperties: false
+      required: ["@class", device, model, codename, brand, osVersion, sdkVersion, product, deviceId]
+      properties:
+        "@class":
+          type: string
+          enum: [com.openlattice.chronicle.sources.AndroidDevice]
+        device:
+          type: string
+          minLength: 1
+          maxLength: 255
+        model:
+          type: string
+          minLength: 1
+          maxLength: 255
+        codename:
+          type: string
+          minLength: 1
+          maxLength: 255
+        brand:
+          type: string
+          minLength: 1
+          maxLength: 255
+        osVersion:
+          type: string
+          minLength: 1
+          maxLength: 50
+        sdkVersion:
+          type: string
+          minLength: 1
+          maxLength: 50
+        product:
+          type: string
+          minLength: 1
+          maxLength: 255
+        deviceId:
+          type: string
+          minLength: 1
+          maxLength: 255
+        additionalInfo:
+          type: object
+          additionalProperties: true
+        fcmRegistrationToken:
+          type: string
+          maxLength: 500
+          deprecated: true
+          description: Legacy Android field retained for wire compatibility; local hosting does not use FCM.
+
+    IOSDevice:
+      type: object
+      description: iOS source device enrollment payload.
+      additionalProperties: false
+      required: ["@class", name, systemName, model, localizedModel, version, deviceId]
+      properties:
+        "@class":
+          type: string
+          enum: [com.openlattice.chronicle.sources.IOSDevice]
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        systemName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        model:
+          type: string
+          minLength: 1
+          maxLength: 255
+        localizedModel:
+          type: string
+          minLength: 1
+          maxLength: 255
+        version:
+          type: string
+          minLength: 1
+          maxLength: 50
+        deviceId:
+          type: string
+          minLength: 1
+          maxLength: 255
+        apnDeviceToken:
+          type: string
+          maxLength: 500
+
+    ChronicleData:
+      type: object
+      description: Container for usage event data uploaded from Android devices
+      additionalProperties: true
+
+    AndroidSensorSample:
+      type: object
+      properties:
+        sensor:
+          type: string
+        values:
+          type: array
+          items:
+            type: number
+        timestamp:
+          type: string
+          format: date-time
+
+    BatterySample:
+      type: object
+      description: |
+        One battery-telemetry sample produced by the Android `battery_telemetry`
+        collection module. DEVICE_STATE_METADATA-class data — carries no participant
+        content. Units follow Android BatteryManager / ACTION_BATTERY_CHANGED.
+      required:
+        - id
+        - timestamp
+        - timezone
+        - levelPercent
+        - chargingState
+        - plugType
+        - temperatureDeciC
+        - voltageMillivolts
+        - health
+      properties:
+        id:
+          type: string
+          description: Stable per-sample identifier, used for de-duplication on upload.
+        timestamp:
+          type: string
+          format: date-time
+          description: Sample time in UTC.
+        timezone:
+          type: string
+          description: Device-default time-zone id at sample time.
+        levelPercent:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Battery charge level as a percentage.
+        chargingState:
+          type: string
+          enum: [UNKNOWN, CHARGING, DISCHARGING, NOT_CHARGING, FULL]
+        plugType:
+          type: string
+          enum: [UNPLUGGED, AC, USB, WIRELESS, DOCK]
+        temperatureDeciC:
+          type: integer
+          description: Battery temperature in tenths of a degree Celsius; may be negative.
+        voltageMillivolts:
+          type: integer
+          minimum: 0
+          description: Battery voltage in millivolts.
+        health:
+          type: string
+          enum: [UNKNOWN, GOOD, OVERHEAT, DEAD, OVER_VOLTAGE, UNSPECIFIED_FAILURE, COLD]
+
+    IosBatterySample:
+      type: object
+      description: |
+        One battery-telemetry sample produced by the iOS `battery_telemetry`
+        collection module. DEVICE_STATE_METADATA-class data — carries no participant
+        content. Deliberately slimmer than the Android `BatterySample`: iOS exposes
+        only charge level, a coarse charging state (UIDevice.batteryState), and Low
+        Power Mode — temperature, voltage, health, and plug type do not exist on iOS
+        and are stored as NULL, never fabricated.
+      required:
+        - id
+        - timestamp
+        - timezone
+        - levelPercent
+        - chargingState
+      properties:
+        id:
+          type: string
+          description: Stable per-sample identifier, used for de-duplication on upload.
+        timestamp:
+          type: string
+          format: date-time
+          description: Sample time in UTC.
+        timezone:
+          type: string
+          description: Device-default time-zone id at sample time.
+        levelPercent:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Battery charge level as a percentage.
+        chargingState:
+          type: string
+          enum: [UNKNOWN, CHARGING, DISCHARGING, NOT_CHARGING, FULL]
+          description: >-
+            Mapped from UIDevice.batteryState — unknown→UNKNOWN, unplugged→DISCHARGING,
+            charging→CHARGING, full→FULL. NOT_CHARGING is never produced on iOS.
+        lowPowerMode:
+          type: boolean
+          description: Whether Low Power Mode was active at sample time; omitted when unknown.
+
+    AmbientAudioClassificationEvent:
+      type: object
+      description: |
+        One on-device sound-classification result from the `ambient_audio`
+        collection module: a single label + confidence within one short listen
+        window. AMBIENT-CONTEXT data, labels-only by construction — classification
+        runs on device and the audio is discarded before this event is ever
+        created; no recording, transcript, voice, or content exists anywhere in
+        the pipeline.
+      required:
+        - id
+        - timestamp
+        - timezone
+        - windowStartMillis
+        - windowEndMillis
+        - label
+        - confidence
+      properties:
+        id:
+          type: string
+          description: Stable per-event identifier, used for de-duplication on upload.
+        timestamp:
+          type: string
+          format: date-time
+          description: Listen-window end time in UTC.
+        timezone:
+          type: string
+          description: Device-default time-zone id at classification time.
+        windowStartMillis:
+          type: integer
+          format: int64
+          description: Listen-window start (epoch millis).
+        windowEndMillis:
+          type: integer
+          format: int64
+          description: Listen-window end (epoch millis).
+        label:
+          type: string
+          description: Classifier sound-class identifier (e.g. music, speech, television).
+        confidence:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          description: Best classifier confidence observed for this label within the window.
+        classifierVersion:
+          type: string
+          description: Classifier identifier/version that produced the label (e.g. apple-soundanalysis-v1).
+
+    AndroidInteractionEvent:
+      type: object
+      description: |
+        One interaction-salience event produced by the Android `interaction_events`
+        collection module. INTERACTION_METADATA-class data — content-free by
+        construction: it carries raw accessibility-node screen bounds and display
+        context, the element role (view class name), and the foreground package,
+        but never element text or contentDescription. The node bounds are not the
+        participant's finger/pointer coordinate. Center, normalized, and grid fields
+        are legacy derivations.
+      required:
+        - id
+        - timestamp
+        - timezone
+        - eventType
+        - gridRows
+        - gridCols
+        - gridRow
+        - gridCol
+        - elementRole
+        - foregroundPackage
+      properties:
+        id:
+          type: string
+          description: Stable per-event identifier, used for de-duplication on upload.
+        timestamp:
+          type: string
+          format: date-time
+          description: Event time in UTC.
+        timezone:
+          type: string
+          description: Device-default time-zone id at event time.
+        eventType:
+          type: string
+          enum: [CLICK, LONG_CLICK, SCROLL, FOCUS, ACCESSIBILITY_FOCUS, SELECT]
+        gridRows:
+          type: integer
+          minimum: 1
+          description: Number of rows in the screen-region grid the event was bucketed under.
+        gridCols:
+          type: integer
+          minimum: 1
+          description: Number of columns in the screen-region grid the event was bucketed under.
+        gridRow:
+          type: integer
+          minimum: 0
+          description: 0-based grid row of the interaction.
+        gridCol:
+          type: integer
+          minimum: 0
+          description: 0-based grid column of the interaction.
+        elementRole:
+          type: string
+          description: The interacted element's role (view class name); never its text.
+        foregroundPackage:
+          type: string
+          description: Package name of the foreground app at event time.
+        positionSource:
+          type: string
+          enum: [ACCESSIBILITY_NODE_BOUNDS]
+          nullable: true
+          description: Provenance of the raw position observation; null on legacy clients.
+        nodeBoundsLeft:
+          type: integer
+          nullable: true
+          description: Raw left edge of the accessibility node in screen pixels; may be negative.
+        nodeBoundsTop:
+          type: integer
+          nullable: true
+          description: Raw top edge of the accessibility node in screen pixels; may be negative.
+        nodeBoundsRight:
+          type: integer
+          nullable: true
+          description: Raw right edge of the accessibility node in screen pixels.
+        nodeBoundsBottom:
+          type: integer
+          nullable: true
+          description: Raw bottom edge of the accessibility node in screen pixels.
+        displayId:
+          type: integer
+          minimum: 0
+          nullable: true
+          description: Logical display id whose coordinate space contains the node bounds.
+        rawX:
+          type: integer
+          nullable: true
+          description: >-
+            Legacy derived horizontal center of the accessibility node. This is not a pointer
+            coordinate; new consumers should derive positions from the raw node bounds.
+        rawY:
+          type: integer
+          nullable: true
+          description: >-
+            Legacy derived vertical center of the accessibility node. This is not a pointer
+            coordinate; new consumers should derive positions from the raw node bounds.
+        screenWidth:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: >-
+            Width of the node's logical display coordinate space at event time. Populated with
+            element-position context; null in the grid-only mode.
+        screenHeight:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: >-
+            Height of the node's logical display coordinate space at event time. Populated with
+            element-position context; null in the grid-only mode.
+        normalizedX:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          nullable: true
+          description: >-
+            Legacy normalized accessibility-node center. New consumers should derive positions
+            from the raw node bounds and display context.
+        normalizedY:
+          type: number
+          format: double
+          minimum: 0
+          maximum: 1
+          nullable: true
+          description: >-
+            Legacy normalized accessibility-node center. New consumers should derive positions
+            from the raw node bounds and display context.
+        scrollDeltaX:
+          type: integer
+          nullable: true
+          description: Signed horizontal scroll delta for a SCROLL event; null otherwise.
+        scrollDeltaY:
+          type: integer
+          nullable: true
+          description: Signed vertical scroll delta for a SCROLL event; null otherwise.
+        eventTimeMillis:
+          type: integer
+          format: int64
+          nullable: true
+          description: >-
+            Monotonic event time in ms since boot (AccessibilityEvent.getEventTime /
+            SystemClock.uptimeMillis domain); authoritative for ordering and kinematics. Null on
+            legacy clients.
+        episodeId:
+          type: string
+          nullable: true
+          description: >-
+            Opaque id grouping a burst of interactions into one episode (reset after an idle gap),
+            for scanpath / per-session reconstruction. Null if not grouped.
+        dwellMillisSincePrev:
+          type: integer
+          format: int64
+          nullable: true
+          description: >-
+            Milliseconds since the previous interaction in the same episode (inter-event dwell;
+            a hesitation/reading-time proxy). Null for the first event of an episode.
+        orientation:
+          type: integer
+          minimum: 0
+          maximum: 3
+          nullable: true
+          description: >-
+            Display rotation at event time as a Surface.ROTATION_* ordinal (0 portrait, 1
+            landscape, 2 reverse-portrait, 3 reverse-landscape). Populated with element-position
+            context; null otherwise.
+        screenDensityDpi:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: >-
+            Display density in DPI at event time (so raw pixels are physically interpretable).
+            Populated with element-position context; null otherwise.
+        scrollVelocityX:
+          type: number
+          format: double
+          nullable: true
+          description: Horizontal scroll velocity in pixels/second for a SCROLL event; null otherwise.
+        scrollVelocityY:
+          type: number
+          format: double
+          nullable: true
+          description: Vertical scroll velocity in pixels/second for a SCROLL event; null otherwise.
+        scrollReversed:
+          type: boolean
+          nullable: true
+          description: >-
+            Whether this SCROLL reversed the previous scroll's dominant direction (a re-reading /
+            back-tracking signal). Null for non-scroll events or when there is no prior scroll.
+
+    AndroidAudioActivityEvent:
+      type: object
+      description: |
+        One audio-activity event produced by the Android `audio_activity`
+        collection module. Behavioral-metadata-class data — mic-free by
+        construction: it carries which app is producing audio, the
+        playback/route/volume state and ringer/DND posture, but never any audio
+        content or microphone capture.
+      required:
+        - id
+        - timestamp
+        - timezone
+        - eventType
+        - audioActive
+      properties:
+        id:
+          type: string
+          description: Stable per-event identifier, used for de-duplication on upload.
+        timestamp:
+          type: string
+          format: date-time
+          description: Event time in UTC.
+        timezone:
+          type: string
+          description: Device-default time-zone id at event time.
+        eventType:
+          type: string
+          enum:
+            - SNAPSHOT
+            - PLAYBACK_CHANGE
+            - ROUTE_CHANGE
+            - BECOMING_NOISY
+            - VOLUME_CHANGE
+            - CALL_CHANGE
+            - MEDIA_SESSION_CHANGE
+        audioActive:
+          type: boolean
+          description: Whether audio playback was active at event time.
+        audioPackage:
+          type: string
+          nullable: true
+          description: Package name of the app producing audio; null if none/unknown.
+        contentType:
+          type: string
+          nullable: true
+          enum:
+            - MUSIC
+            - SPEECH
+            - MOVIE
+            - SONIFICATION
+            - UNKNOWN
+          description: Coarse audio content type from the audio attributes; null if unavailable.
+        playbackState:
+          type: string
+          nullable: true
+          enum:
+            - PLAYING
+            - PAUSED
+            - STOPPED
+            - BUFFERING
+            - NONE
+          description: Active media session playback state; null if no session.
+        outputRoute:
+          type: string
+          nullable: true
+          enum:
+            - SPEAKER
+            - EARPIECE
+            - WIRED_HEADPHONES
+            - BLUETOOTH
+            - USB
+            - HEARING_AID
+            - OTHER
+            - UNKNOWN
+          description: Active audio output route; null if unavailable.
+        routeConnected:
+          type: boolean
+          nullable: true
+          description: Whether an external output route (e.g. headphones) was connected; null if unavailable.
+        mediaVolume:
+          type: integer
+          nullable: true
+          description: Current STREAM_MUSIC volume index; null if unavailable.
+        maxMediaVolume:
+          type: integer
+          nullable: true
+          description: Maximum STREAM_MUSIC volume index (so mediaVolume is interpretable); null if unavailable.
+        ringerMode:
+          type: string
+          nullable: true
+          enum:
+            - SILENT
+            - VIBRATE
+            - NORMAL
+            - UNKNOWN
+          description: Device ringer mode at event time; null if unavailable.
+        dndActive:
+          type: boolean
+          nullable: true
+          description: Whether Do Not Disturb was active at event time; null if unavailable.
+        callActive:
+          type: boolean
+          nullable: true
+          description: Whether a telephony/VoIP call was active at event time; null if unavailable.
+
+    AndroidAudioContentEvent:
+      type: object
+      description: |
+        One audio-content event produced by the Android `audio_content`
+        collection module. Media-content-class data — the opt-in track-metadata
+        path: it carries the active media session's title / artist / album and
+        play position for the foreground audio package, never the audio itself.
+      required:
+        - id
+        - timestamp
+        - timezone
+        - audioPackage
+      properties:
+        id:
+          type: string
+          description: Stable per-event identifier, used for de-duplication on upload.
+        timestamp:
+          type: string
+          format: date-time
+          description: Event time in UTC.
+        timezone:
+          type: string
+          description: Device-default time-zone id at event time.
+        audioPackage:
+          type: string
+          description: Package name of the app whose media session produced this metadata.
+        title:
+          type: string
+          nullable: true
+          description: Media session track title; null if unavailable.
+        artist:
+          type: string
+          nullable: true
+          description: Media session track artist; null if unavailable.
+        album:
+          type: string
+          nullable: true
+          description: Media session track album; null if unavailable.
+        durationMillis:
+          type: integer
+          format: int64
+          nullable: true
+          description: Track duration in milliseconds; null if unavailable.
+        positionMillis:
+          type: integer
+          format: int64
+          nullable: true
+          description: Playback position in milliseconds at event time; null if unavailable.
+
+    AndroidNotificationActivityEvent:
+      type: object
+      description: |
+        One notification-activity event produced by the Android
+        `notification_activity` collection module. Behavioral-metadata-class
+        data — content-free by construction: it carries per-app notification
+        posted/removed events with category and importance, but never any
+        notification text or title.
+      required:
+        - id
+        - timestamp
+        - timezone
+        - eventType
+        - packageName
+      properties:
+        id:
+          type: string
+          description: Stable per-event identifier, used for de-duplication on upload.
+        timestamp:
+          type: string
+          format: date-time
+          description: Event time in UTC.
+        timezone:
+          type: string
+          description: Device-default time-zone id at event time.
+        eventType:
+          type: string
+          enum:
+            - POSTED
+            - REMOVED
+        packageName:
+          type: string
+          description: Package name of the app that posted/removed the notification.
+        category:
+          type: string
+          nullable: true
+          description: Notification category (e.g. msg, call, alarm); never its text. Null if unavailable.
+        ongoing:
+          type: boolean
+          nullable: true
+          description: Whether the notification was ongoing (non-dismissable); null if unavailable.
+        importance:
+          type: integer
+          nullable: true
+          description: NotificationManager importance level for the notification's channel; null if unavailable.
+
+    AndroidSleepEvent:
+      type: object
+      description: |
+        One sleep sample produced by the Android `sleep` collection module (Play
+        Services Sleep API). Health-metrics-class, content-free and mic-free: a sleep
+        label/confidence plus the coarse light/motion levels the on-device classifier
+        reports. No raw sensor stream leaves the device.
+      required:
+        - id
+        - timestamp
+        - timezone
+        - eventType
+      properties:
+        id:
+          type: string
+          description: Stable per-event identifier, used for de-duplication on upload.
+        timestamp:
+          type: string
+          format: date-time
+          description: Sample/detection time in UTC.
+        timezone:
+          type: string
+          description: Device-default time-zone id at sample time.
+        eventType:
+          type: string
+          enum: [SEGMENT, CLASSIFY]
+        segmentStartMillis:
+          type: integer
+          format: int64
+          nullable: true
+          description: SEGMENT start (epoch millis); null for a CLASSIFY.
+        segmentEndMillis:
+          type: integer
+          format: int64
+          nullable: true
+          description: SEGMENT end (epoch millis); null for a CLASSIFY.
+        segmentStatus:
+          type: string
+          nullable: true
+          enum: [SUCCESSFUL, MISSING_DATA, NOT_DETECTED, UNKNOWN]
+        confidence:
+          type: integer
+          nullable: true
+          minimum: 0
+          maximum: 100
+          description: Sleep confidence 0-100 from a CLASSIFY; null for a SEGMENT.
+        light:
+          type: integer
+          nullable: true
+          description: Ambient-light level the classifier reported; when known.
+        motion:
+          type: integer
+          nullable: true
+          description: Device-motion level the classifier reported; when known.
+
+    AndroidActivityRecognitionEvent:
+      type: object
+      description: |
+        One activity-recognition sample produced by the Android `activity_recognition`
+        collection module (Play Services Activity Recognition / Activity Transition
+        API). Behavioral-metadata-class (default OFF), content-free: an activity label
+        plus confidence, no raw sensors or location.
+      required:
+        - id
+        - timestamp
+        - timezone
+        - activityType
+        - confidence
+      properties:
+        id:
+          type: string
+          description: Stable per-event identifier, used for de-duplication on upload.
+        timestamp:
+          type: string
+          format: date-time
+          description: Sample/detection time in UTC.
+        timezone:
+          type: string
+          description: Device-default time-zone id at sample time.
+        activityType:
+          type: string
+          enum: [STILL, WALKING, RUNNING, ON_FOOT, IN_VEHICLE, ON_BICYCLE, TILTING, UNKNOWN]
+        confidence:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Classifier confidence 0-100 for activityType.
+        transitionType:
+          type: string
+          nullable: true
+          enum: [ENTER, EXIT]
+          description: For a transition sample, whether activityType was entered/exited; null for a periodic result.
+
+    AndroidHealthMetricEvent:
+      type: object
+      description: |
+        One health metric read from the system Health Connect store by the Android
+        `health_connect` collection module. Health-metrics-class, opt-in. Each sample
+        is a single aggregated/instantaneous record over [startMillis, endMillis].
+      required:
+        - id
+        - timestamp
+        - timezone
+        - metricType
+        - value
+        - unit
+        - startMillis
+        - endMillis
+      properties:
+        id:
+          type: string
+          description: Stable per-event identifier, used for de-duplication on upload.
+        timestamp:
+          type: string
+          format: date-time
+          description: Read/capture time in UTC.
+        timezone:
+          type: string
+          description: Device-default time-zone id at sample time.
+        metricType:
+          type: string
+          enum: [STEPS, DISTANCE, ACTIVE_CALORIES, TOTAL_CALORIES, HEART_RATE, RESTING_HEART_RATE, OXYGEN_SATURATION, RESPIRATORY_RATE, SLEEP_SESSION, EXERCISE_SESSION, FLOORS_CLIMBED, HEART_RATE_VARIABILITY, BODY_TEMPERATURE, SKIN_TEMPERATURE, SLEEP_STAGE_AWAKE, SLEEP_STAGE_LIGHT, SLEEP_STAGE_DEEP, SLEEP_STAGE_REM, SLEEP_STAGE_OUT_OF_BED, SLEEP_STAGE_AWAKE_IN_BED, SLEEP_STAGE_UNKNOWN, OTHER]
+        value:
+          type: number
+          format: double
+          description: The metric value, interpreted per metricType and unit.
+        unit:
+          type: string
+          description: Unit for value (e.g. count, bpm, m, kcal, %).
+        startMillis:
+          type: integer
+          format: int64
+          description: Record window start (epoch millis).
+        endMillis:
+          type: integer
+          format: int64
+          description: Record window end (epoch millis); equals startMillis for an instantaneous reading.
+        sourcePackage:
+          type: string
+          nullable: true
+          description: Package of the app/wearable integration that wrote the record, when known.
+
+    AndroidConnectivityStateEvent:
+      type: object
+      description: |
+        One content-free connectivity-state sample produced by the Android
+        `connectivity_state` collection module. Device-state-metadata-class (default
+        OFF): the active transport plus metered/validated flags. No SSID, BSSID, IP, or
+        cell identifiers are captured.
+      required:
+        - id
+        - timestamp
+        - timezone
+        - eventType
+        - transport
+        - connected
+      properties:
+        id:
+          type: string
+          description: Stable per-event identifier, used for de-duplication on upload.
+        timestamp:
+          type: string
+          format: date-time
+          description: Sample time in UTC.
+        timezone:
+          type: string
+          description: Device-default time-zone id at sample time.
+        eventType:
+          type: string
+          enum: [AVAILABLE, LOST, CHANGED, SNAPSHOT]
+        transport:
+          type: string
+          enum: [WIFI, CELLULAR, ETHERNET, VPN, BLUETOOTH, NONE, OTHER]
+        connected:
+          type: boolean
+          description: Whether a network was connected at sample time.
+        metered:
+          type: boolean
+          nullable: true
+          description: Whether the active network is metered; when known.
+        validated:
+          type: boolean
+          nullable: true
+          description: Whether the active network has validated internet; when known.
+
+    AndroidAppNetworkUsageEvent:
+      type: object
+      description: |
+        One per-app network-usage sample produced by the Android `app_network_usage`
+        collection module (NetworkStatsManager). Behavioral-metadata-class (default
+        OFF) — volume counts only: the transmitted/received byte counts for one app
+        over one time bucket, with zero visibility into payloads, destinations,
+        domains, or URLs.
+      required:
+        - id
+        - timestamp
+        - timezone
+        - packageName
+        - networkType
+        - rxBytes
+        - txBytes
+        - bucketStartMillis
+        - bucketEndMillis
+      properties:
+        id:
+          type: string
+          description: Stable per-event identifier, used for de-duplication on upload.
+        timestamp:
+          type: string
+          format: date-time
+          description: Bucket read time in UTC.
+        timezone:
+          type: string
+          description: Device-default time-zone id at sample time.
+        packageName:
+          type: string
+          description: Package whose usage this is; or a uid:N form when unresolvable.
+        networkType:
+          type: string
+          enum: [WIFI, CELLULAR, OTHER]
+        rxBytes:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Received bytes over the bucket.
+        txBytes:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Transmitted bytes over the bucket.
+        bucketStartMillis:
+          type: integer
+          format: int64
+          description: Bucket start (epoch millis).
+        bucketEndMillis:
+          type: integer
+          format: int64
+          description: Bucket end (epoch millis).
+
+    AndroidUploadDiagnosticEvent:
+      type: object
+      description: |
+        Bounded, redacted aggregate describing one or more equivalent Android upload
+        failures. Participant, device, and destination identity are supplied by the
+        authenticated request and connection rather than duplicated in this body.
+      required:
+        - id
+        - day
+        - moduleFamily
+        - issueCode
+        - count
+        - firstOccurredAt
+        - lastOccurredAt
+      properties:
+        id:
+          type: string
+          format: uuid
+        day:
+          type: string
+          format: date
+        moduleFamily:
+          type: string
+          enum: [USAGE_LIFECYCLE, BATTERY, DEVICE_TELEMETRY]
+        issueCode:
+          type: string
+          enum:
+            - DESTINATION_MISSING
+            - DESTINATION_IDENTITY_MISMATCH
+            - DESTINATION_SOURCE_DEVICE_MISSING
+            - DESTINATION_SETUP_INCOMPLETE
+            - DESTINATION_DISABLED
+            - DESTINATION_NONCANONICAL
+            - DESTINATION_CREDENTIAL_INCOMPLETE
+            - HTTP_SERVER_ERROR
+            - HTTP_CLIENT_ERROR
+            - TIMEOUT
+            - DNS_FAILURE
+            - TLS_FAILURE
+            - CONNECTION_FAILURE
+            - UPLOAD_FAILURE
+        count:
+          type: integer
+          minimum: 1
+        firstOccurredAt:
+          type: string
+          format: date-time
+        lastOccurredAt:
+          type: string
+          format: date-time
+        httpStatus:
+          type: integer
+          minimum: 100
+          maximum: 599
+          nullable: true
+        errorType:
+          type: string
+          maxLength: 128
+          nullable: true
+
+    AndroidDeviceSettingsEvent:
+      type: object
+      description: |
+        One content-free device-settings snapshot produced by the Android
+        `device_settings` collection module. Device-state-metadata-class (default OFF):
+        a curated set of display / sound / accessibility / system toggles. Every field
+        is content-free and identity-free; all are nullable so a partial snapshot still
+        serializes.
+      required:
+        - id
+        - timestamp
+        - timezone
+      properties:
+        id:
+          type: string
+          description: Stable per-event identifier, used for de-duplication on upload.
+        timestamp:
+          type: string
+          format: date-time
+          description: Snapshot time in UTC.
+        timezone:
+          type: string
+          description: Device-default time-zone id at sample time.
+        darkMode:
+          type: boolean
+          nullable: true
+          description: Whether system dark/night mode is active; when known.
+        fontScale:
+          type: number
+          format: float
+          nullable: true
+          description: Font scale (Configuration.fontScale); when known.
+        accessibilityEnabled:
+          type: boolean
+          nullable: true
+          description: Whether any accessibility service is enabled; when known.
+        dndActive:
+          type: boolean
+          nullable: true
+          description: Whether Do-Not-Disturb / a non-ALL interruption filter is active; when known.
+        batterySaver:
+          type: boolean
+          nullable: true
+          description: Whether battery-saver / power-save mode is active; when known.
+        thermalStatus:
+          type: string
+          nullable: true
+          enum: [NONE, LIGHT, MODERATE, SEVERE, CRITICAL, EMERGENCY, SHUTDOWN, UNKNOWN]
+        autoRotate:
+          type: boolean
+          nullable: true
+          description: Whether auto-rotate is enabled; when known.
+        locationServicesEnabled:
+          type: boolean
+          nullable: true
+          description: Whether the location-services OS switch is on (NOT a location); when known.
+        storageFreeBytes:
+          type: integer
+          format: int64
+          nullable: true
+          description: Free internal storage in bytes; when known.
+        storageTotalBytes:
+          type: integer
+          format: int64
+          nullable: true
+          description: Total internal storage in bytes; when known.
+        screenBrightness:
+          type: integer
+          format: int32
+          nullable: true
+          description: >-
+            Screen brightness level (Settings.System.SCREEN_BRIGHTNESS, typically 0–255); when
+            known. Only directly meaningful when screenBrightnessAuto is false.
+        screenBrightnessAuto:
+          type: boolean
+          nullable: true
+          description: Whether adaptive/automatic brightness is on; when known.
+        mediaVolume:
+          type: integer
+          format: int32
+          nullable: true
+          description: Media/music stream volume step (no audio is recorded); when known.
+        mediaVolumeMax:
+          type: integer
+          format: int32
+          nullable: true
+          description: Max media stream volume on this device — makes mediaVolume interpretable.
+        ringVolume:
+          type: integer
+          format: int32
+          nullable: true
+          description: Ringtone stream volume step; when known.
+        ringVolumeMax:
+          type: integer
+          format: int32
+          nullable: true
+          description: Max ringtone stream volume on this device.
+        notificationVolume:
+          type: integer
+          format: int32
+          nullable: true
+          description: Notification stream volume step; when known.
+        notificationVolumeMax:
+          type: integer
+          format: int32
+          nullable: true
+          description: Max notification stream volume on this device.
+        alarmVolume:
+          type: integer
+          format: int32
+          nullable: true
+          description: Alarm stream volume step; when known.
+        alarmVolumeMax:
+          type: integer
+          format: int32
+          nullable: true
+          description: Max alarm stream volume on this device.
+        ringerMode:
+          type: string
+          nullable: true
+          enum: [NORMAL, SILENT, VIBRATE, UNKNOWN]
+          description: Ringer mode (normal / vibrate / silent), from AudioManager; when known.
+
+    AndroidDeviceSensorAvailability:
+      type: object
+      properties:
+        participantId:
+          type: string
+        deviceId:
+          type: string
+        sensors:
+          type: array
+          items:
+            type: string
+        screenWidthPixels:
+          type: integer
+          nullable: true
+          description: Display width in pixels at report time; null if unavailable.
+        screenHeightPixels:
+          type: integer
+          nullable: true
+          description: Display height in pixels at report time; null if unavailable.
+        screenDensityDpi:
+          type: integer
+          nullable: true
+          description: Display density in DPI at report time; null if unavailable.
+        displayRotation:
+          type: integer
+          minimum: 0
+          maximum: 3
+          nullable: true
+          description: Display rotation as a Surface.ROTATION_* ordinal (0..3); null if unavailable.
+        interactionPointerCaptureCapability:
+          type: string
+          enum: [PLATFORM_API_UNAVAILABLE, REQUIRES_INPUT_INTERCEPTION]
+          nullable: true
+          description: >-
+            Device/API-specific reason exact finger coordinates are unavailable to Chronicle's
+            non-interfering collector; null on legacy clients.
+
+    SensorDataSample:
+      type: object
+      additionalProperties: false
+      required: [id, dateRecorded, duration, data, device, timezone, sensor, startDate, endDate]
+      properties:
+        id:
+          type: string
+          format: uuid
+        dateRecorded:
+          type: string
+          format: date-time
+        duration:
+          type: number
+          format: double
+          minimum: 0
+        data:
+          type: string
+          minLength: 1
+          maxLength: 1000000
+        device:
+          type: string
+          minLength: 1
+          maxLength: 255
+        timezone:
+          type: string
+          minLength: 1
+          maxLength: 100
+        sensor:
+          type: string
+          enum: [deviceUsage, keyboardMetrics, messagesUsage, phoneUsage, accelerometer, pedometer, motionActivity]
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+
+    ScreenTimeUsageEnvelope:
+      type: object
+      additionalProperties: false
+      required: [deviceId, studyId, participantId, generatedAt, records]
+      properties:
+        schemaVersion:
+          type: integer
+          minimum: 1
+          default: 1
+        deviceId:
+          type: string
+          minLength: 1
+          maxLength: 255
+        studyId:
+          type: string
+          minLength: 1
+          maxLength: 64
+        participantId:
+          type: string
+          minLength: 1
+          maxLength: 255
+        generatedAt:
+          type: string
+          format: date-time
+        records:
+          type: array
+          maxItems: 10000
+          items:
+            $ref: '#/components/schemas/ScreenTimeUsageRecord'
+
+    ScreenTimeUsageRecord:
+      type: object
+      additionalProperties: false
+      required: [id, source, confidence, capturedAt, observationStart, observationEnd, timezoneIdentifier, durationSeconds]
+      properties:
+        id:
+          type: string
+          format: uuid
+        source:
+          type: string
+          enum: [monitorThreshold, deviceActivityExport, reportSummary, shortcutSnapshot]
+          maxLength: 64
+        confidence:
+          type: string
+          enum: [appleDeviceActivity, exactParticipantSubmitted, thresholdEstimate, externalShortcut, reportViewOnly]
+          maxLength: 64
+        rowKind:
+          type: string
+          enum: [application, webDomain, categorySummary, thresholdEvent]
+          maxLength: 64
+        capturedAt:
+          type: string
+          format: date-time
+        observationStart:
+          type: string
+          format: date-time
+        observationEnd:
+          type: string
+          format: date-time
+        timezoneIdentifier:
+          type: string
+          minLength: 1
+          maxLength: 100
+        appName:
+          type: string
+          maxLength: 500
+        bundleIdentifier:
+          type: string
+          maxLength: 500
+        webDomain:
+          type: string
+          maxLength: 500
+        categoryName:
+          type: string
+          maxLength: 500
+        durationSeconds:
+          type: integer
+          minimum: 0
+        notificationCount:
+          type: integer
+          minimum: 0
+        pickupCount:
+          type: integer
+          minimum: 0
+        thresholdSeconds:
+          type: integer
+          minimum: 0
+        rawSourceLabel:
+          type: string
+          maxLength: 500
+
+    UserIdentificationEnvelope:
+      type: object
+      additionalProperties: false
+      required: [deviceId, studyId, participantId, generatedAt, records]
+      properties:
+        schemaVersion:
+          type: integer
+          minimum: 1
+          default: 1
+        deviceId:
+          type: string
+          minLength: 1
+          maxLength: 255
+        studyId:
+          type: string
+          minLength: 1
+          maxLength: 64
+        participantId:
+          type: string
+          minLength: 1
+          maxLength: 255
+        generatedAt:
+          type: string
+          format: date-time
+        records:
+          type: array
+          maxItems: 10000
+          items:
+            $ref: '#/components/schemas/UserIdentificationRecord'
+
+    UserIdentificationRecord:
+      type: object
+      additionalProperties: false
+      required: [id, capturedAt, timezoneIdentifier, trigger, choice]
+      properties:
+        id:
+          type: string
+          format: uuid
+        capturedAt:
+          type: string
+          format: date-time
+        timezoneIdentifier:
+          type: string
+          minLength: 1
+          maxLength: 100
+        trigger:
+          type: string
+          enum: [appBecameActive, manualInApp, notificationAction, shortcut, screenTimeThreshold]
+          maxLength: 64
+        choice:
+          type: string
+          enum: [participant, someoneElse]
+          maxLength: 64
+        promptId:
+          type: string
+          format: uuid
+        sourceLabel:
+          type: string
+          maxLength: 500
+
+    Candidate:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          format: uuid
+
+    DeviceUsage:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            type: string
+        usageByApp:
+          type: object
+          additionalProperties:
+            type: number
+
+    AppUsage:
+      type: object
+      properties:
+        appPackageName:
+          type: string
+        appLabel:
+          type: string
+        users:
+          type: array
+          items:
+            type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    Questionnaire:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        studyId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        active:
+          type: boolean
+        recurrence:
+          type: string
+        questions:
+          type: array
+          items:
+            type: object
+        createdAt:
+          type: string
+          format: date-time
+
+    QuestionnaireUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        active:
+          type: boolean
+        questions:
+          type: array
+          items:
+            type: object
+
+    QuestionnaireResponse:
+      type: object
+      properties:
+        questionId:
+          type: string
+          format: uuid
+        values:
+          type: array
+          items:
+            type: string
+
+    TimeUseDiaryResponse:
+      type: object
+      additionalProperties: true
+
+    TimeUseDiarySettingsResponse:
+      type: object
+      description: >-
+        Participant-readable projection of the study's TimeUseDiarySettings — only the
+        non-sensitive variant flags the web diary needs to render the configured instrument.
+      properties:
+        enableChangesForOhioStateUniversity:
+          type: boolean
+        enableChangesForSherbrookeUniversity:
+          type: boolean
+        clockFormat:
+          type: integer
+          description: 12 or 24 hour clock for the diary UI.
+        clockFormatLocked:
+          type: boolean
+          description: When true, the participant may not switch the clock format.
+        language:
+          type: string
+      required:
+        - enableChangesForOhioStateUniversity
+        - enableChangesForSherbrookeUniversity
+        - clockFormat
+        - clockFormatLocked
+        - language
+
+    AppUsageFrequency:
+      type: string
+      enum: [DAILY, HOURLY]
+
+    AppUsageFrequencyResponse:
+      type: object
+      description: The study's app-usage survey frequency (DAILY app-by-app vs HOURLY time-bucketed).
+      properties:
+        appUsageFrequency:
+          $ref: '#/components/schemas/AppUsageFrequency'
+      required:
+        - appUsageFrequency
+
+    ParticipantNotification:
+      type: object
+      properties:
+        participantId:
+          type: string
+        message:
+          type: string
+        deliveryType:
+          type: string
+
+    AclData:
+      type: object
+      properties:
+        action:
+          type: string
+          enum: [ADD, REMOVE, SET]
+        acl:
+          $ref: '#/components/schemas/Acl'
+
+    AclKey:
+      type: array
+      items:
+        type: string
+        format: uuid
+
+    Acl:
+      type: object
+      properties:
+        aclKey:
+          $ref: '#/components/schemas/AclKey'
+        aces:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ace'
+
+    Ace:
+      type: object
+      properties:
+        principal:
+          $ref: '#/components/schemas/Principal'
+        permissions:
+          type: array
+          items:
+            type: string
+
+    AclExplanation:
+      type: object
+      properties:
+        aclKey:
+          $ref: '#/components/schemas/AclKey'
+        principal:
+          $ref: '#/components/schemas/Principal'
+        permissions:
+          type: array
+          items:
+            type: string
+        path:
+          type: array
+          items:
+            $ref: '#/components/schemas/Principal'
+
+    AccessCheck:
+      type: object
+      properties:
+        aclKey:
+          $ref: '#/components/schemas/AclKey'
+        permissions:
+          type: array
+          items:
+            type: string
+
+    Authorization:
+      type: object
+      properties:
+        aclKey:
+          $ref: '#/components/schemas/AclKey'
+        permissions:
+          type: object
+          additionalProperties:
+            type: boolean
+
+    AuthorizedObjectsSearchResult:
+      type: object
+      properties:
+        pagingToken:
+          type: string
+        authorizedObjects:
+          type: array
+          items:
+            $ref: '#/components/schemas/AclKey'
+
+    Principal:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [USER, ROLE]
+        id:
+          type: string
+
+    SecurablePrincipal:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        aclKey:
+          $ref: '#/components/schemas/AclKey'
+        principal:
+          $ref: '#/components/schemas/Principal'
+        title:
+          type: string
+        description:
+          type: string
+
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        aclKey:
+          $ref: '#/components/schemas/AclKey'
+        principal:
+          $ref: '#/components/schemas/Principal'
+        title:
+          type: string
+        description:
+          type: string
+        organizationId:
+          type: string
+          format: uuid
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+        organizations:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    UserSearchFields:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+
+    DirectedAclKeys:
+      type: object
+      properties:
+        source:
+          $ref: '#/components/schemas/AclKey'
+        destination:
+          $ref: '#/components/schemas/AclKey'
+
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
