@@ -141,7 +141,7 @@ task swaggerJava {
     }
 }
 
-// Referenced by .github/workflows/ci.yml ("Validate OpenAPI spec"). Parses and
+// Run by scripts/local-ci.sh jvm-smoke ("Validate OpenAPI spec"). Parses and
 // validates chronicle.yaml with the OpenAPI 3 parser (on the buildscript classpath
 // via swagger-codegen) and fails the build on any parse/validation message.
 task validateOpenApiSpec {
