@@ -1,6 +1,7 @@
 package com.openlattice.chronicle.export
 
 import com.openlattice.chronicle.study.StudyApi
+import okhttp3.ResponseBody
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -40,5 +41,5 @@ public interface ExportApi {
     public fun downloadExport(
         @Path(StudyApi.STUDY_ID) studyId: UUID,
         @Path(EXPORT_ID) exportId: UUID
-    ): Unit
+    ): ResponseBody
 }
