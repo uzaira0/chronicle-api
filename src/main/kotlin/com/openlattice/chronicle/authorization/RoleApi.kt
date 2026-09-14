@@ -2,8 +2,8 @@ package com.openlattice.chronicle.authorization
 
 import com.openlattice.chronicle.study.StudyApi
 import retrofit2.http.Body
-import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.HTTP
 import retrofit2.http.POST
 import retrofit2.http.Path
 import java.util.UUID
@@ -20,7 +20,7 @@ public interface RoleApi {
         @Body assignment: RoleAssignment,
     ): Unit
 
-    @DELETE(StudyApi.BASE + StudyApi.STUDY_ID_PATH + ROLES_PATH)
+    @HTTP(method = "DELETE", path = StudyApi.BASE + StudyApi.STUDY_ID_PATH + ROLES_PATH, hasBody = true)
     public fun revokeRole(
         @Path(StudyApi.STUDY_ID) studyId: UUID,
         @Body assignment: RoleAssignment,

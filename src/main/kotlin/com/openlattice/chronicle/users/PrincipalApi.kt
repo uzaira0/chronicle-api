@@ -25,6 +25,7 @@ import com.openlattice.chronicle.base.OK
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.HTTP
 import retrofit2.http.POST
 import retrofit2.http.Path
 
@@ -80,7 +81,7 @@ public interface PrincipalApi {
     @POST(BASE + UPDATE)
     public fun addPrincipalToPrincipal(@Body directedAclKeys: DirectedAclKeys): OK
 
-    @DELETE(BASE + UPDATE)
+    @HTTP(method = "DELETE", path = BASE + UPDATE, hasBody = true)
     public fun removePrincipalFromPrincipal(@Body directedAclKeys: DirectedAclKeys): OK
 
     @DELETE(BASE + USERS + USER_ID_PATH)

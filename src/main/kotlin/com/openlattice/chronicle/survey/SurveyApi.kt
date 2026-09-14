@@ -66,7 +66,7 @@ public interface SurveyApi {
         @Path(PARTICIPANT_ID) participantId: String,
         @Query(START_DATE) startDateTime: OffsetDateTime,
         @Query(END_DATE) endDateTime: OffsetDateTime,
-        @Query(THRESHOLD) thresholdInSeconds: Int? = 0,
+        @Query(THRESHOLD) thresholdInSeconds: Int? = null,
     ): DeviceUsage
 
     /**
@@ -125,7 +125,7 @@ public interface SurveyApi {
      * @param appPackages
      * @return HTTP OK with message success if request succeeds, other error code otherwise.
      */
-    @HTTP(method = "DELETE", path = BASE + STUDY_ID_PATH + FILTERED_PATH)
+    @HTTP(method = "DELETE", path = BASE + STUDY_ID_PATH + FILTERED_PATH, hasBody = true)
     public fun allowAppForStudyAppUsageSurvey(
         @Path(STUDY_ID) studyId: UUID,
         @Body appPackages: Set<String>,
@@ -147,7 +147,7 @@ public interface SurveyApi {
         @Path(PARTICIPANT_ID) participantId: String,
         @Query(START_DATE) startDateTime: OffsetDateTime,
         @Query(END_DATE) endDateTime: OffsetDateTime,
-        @Query(THRESHOLD) thresholdInSeconds: Int? = 0,
+        @Query(THRESHOLD) thresholdInSeconds: Int? = null,
     ): List<AppUsage>
 
     /**
