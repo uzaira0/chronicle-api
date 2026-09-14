@@ -168,6 +168,16 @@ public interface StudyApi {
     /**
      * Updates study settings for a study.
      *
+     * Only [settingType] is touched: the server merges the delta into the row-locked authoritative
+     * settings map, so a write of one type never rewrites another type from a client-supplied merge.
+     *
+     * Optimistic concurrency: the settings GET endpoints return the study's `settingsRevision` as a
+     * quoted strong `ETag`. Send it back as `If-Match: "<revision>"` to make the write conditional
+     * on the state that was read; a stale revision is rejected with HTTP 412 and a
+     * [StudySettingsPreconditionFailure] body carrying the current revision and settings. Omitting
+     * the header (or sending `*`) skips the check, preserving behaviour for existing mobile/iOS
+     * clients. Every successful settings write increments the revision and returns it in `ETag`.
+     *
      * Updating SensorKit data collection for a study requires admin permission due to Apple restrictions.
      *
      * @param studyId The id of the study to update.

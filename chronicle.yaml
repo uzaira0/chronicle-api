@@ -1415,6 +1415,13 @@ paths:
       responses:
         '200':
           description: Map of setting type to setting value
+          headers:
+            ETag:
+              description: |
+                The study's current settings revision, quoted (e.g. `"7"`). Send it back as
+                `If-Match` on a settings write to make that write conditional on this read.
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -1433,6 +1440,11 @@ paths:
       responses:
         '200':
           description: The study setting
+          headers:
+            ETag:
+              description: The study's current settings revision, quoted (e.g. `"7"`).
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -1440,10 +1452,18 @@ paths:
     patch:
       tags: [Study]
       summary: Update a specific study setting
+      description: |
+        Applies a delta to exactly one setting type. The server merges into the row-locked
+        authoritative settings map, so a write of type X never rewrites any other type.
+
+        Pass `If-Match` with the `settingsRevision` this edit was based on to make the write
+        conditional; a stale revision returns 412 with the current state. Every successful write
+        increments the revision and returns it in `ETag`.
       operationId: updateStudySettings
       parameters:
         - $ref: '#/components/parameters/studyId'
         - $ref: '#/components/parameters/settingType'
+        - $ref: '#/components/parameters/ifMatchSettingsRevision'
       requestBody:
         required: true
         content:
@@ -1453,6 +1473,24 @@ paths:
       responses:
         '200':
           description: OK
+          headers:
+            ETag:
+              description: The study's settings revision after this write, quoted (e.g. `"8"`).
+              schema:
+                type: string
+        '412':
+          description: |
+            The `If-Match` revision no longer matches; another client changed the study's
+            settings. The body carries the current revision and settings.
+          headers:
+            ETag:
+              description: The study's current settings revision, quoted.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudySettingsPreconditionFailure'
 
   /chronicle/v3/study/{studyId}/settings/audit:
     get:
@@ -2922,8 +2960,43 @@ components:
       required: true
       schema:
         type: string
+    ifMatchSettingsRevision:
+      name: If-Match
+      in: header
+      required: false
+      description: |
+        Optimistic-concurrency precondition. Supply the quoted `settingsRevision` taken from the
+        `ETag` of the settings response this edit was based on, e.g. `"7"`. The write is applied
+        only if the study's settings revision still matches; otherwise the server returns 412 with
+        the current revision and settings.
+
+        Omitting the header (or sending `*`) skips the check, which is what older mobile and iOS
+        clients do.
+      schema:
+        type: string
+        example: '"7"'
 
   schemas:
+    StudySettingsPreconditionFailure:
+      type: object
+      description: |
+        Returned with HTTP 412 when an `If-Match` settings precondition no longer matches. Carries
+        the current state so the client can re-render without issuing another GET and racing again.
+      required:
+        - settingsRevision
+        - settings
+      properties:
+        settingsRevision:
+          type: integer
+          format: int64
+          description: The study's current settings revision.
+        settings:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/StudySetting'
+          description: The study's current settings map.
+        message:
+          type: string
     EnrollmentResponse:
       type: object
       description: |
