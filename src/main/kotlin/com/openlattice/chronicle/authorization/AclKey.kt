@@ -19,8 +19,8 @@ public data class AclKey @JsonCreator(mode = JsonCreator.Mode.DELEGATING) constr
         var i = 0
         while (result == 0 && i < size) {
 
-            //If everything has been equal up to the point o ran out of entries.
-            if (i > o.size) {
+            //If everything has been equal up to the point o ran out of entries, this key sorts after o.
+            if (i >= o.size) {
                 return 1
             }
 
@@ -30,7 +30,9 @@ public data class AclKey @JsonCreator(mode = JsonCreator.Mode.DELEGATING) constr
             result = a.compareTo(b)
             ++i
         }
-        return result
+
+        //A common prefix that exhausted this key first means this key sorts before o.
+        return if (result == 0) size.compareTo(o.size) else result
     }
 
     override fun equals(other: Any?): Boolean {
