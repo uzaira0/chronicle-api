@@ -3286,13 +3286,49 @@ components:
 
     AndroidSensorSetting:
       type: object
+      description: >-
+        Hardware-sensor sampling policy (chronicle-models AndroidSensorSetting). Every field
+        is optional on input; the server applies the listed default.
       properties:
         sensors:
           type: array
+          uniqueItems: true
+          description: Enabled sensors; empty when omitted.
           items:
-            type: string
-        samplingRate:
+            $ref: '#/components/schemas/AndroidSensorType'
+        samplingRateHz:
           type: integer
+          format: int32
+          default: 5
+          description: Sampling rate in Hz.
+        dutyCycleActiveSeconds:
+          type: integer
+          format: int32
+          default: 30
+          description: Seconds of sampling in each duty cycle.
+        dutyCyclePeriodSeconds:
+          type: integer
+          format: int32
+          default: 300
+          description: Length of one duty cycle, in seconds.
+
+    AndroidSensorType:
+      type: string
+      enum:
+        - accelerometer
+        - gyroscope
+        - magnetometer
+        - gravity
+        - linearAcceleration
+        - rotationVector
+        - stepCounter
+        - light
+        - proximity
+        - significantMotion
+        - tiltDetector
+        - screenOrientation
+        - samsungGripWifi
+        - samsungMotion
 
     ChronicleDataCollectionSettings:
       type: object
@@ -3354,6 +3390,7 @@ components:
         - connectivity_state
         - app_network_usage
         - device_settings
+        - ambient_audio
         # Reserved IDs — namespace-frozen for future modules, no implementation yet. Kept in
         # sync with the chronicle-models CollectionModuleId enum (the source of truth).
         - gaze_tracking
@@ -3826,7 +3863,7 @@ components:
 
     ParticipationStatus:
       type: string
-      enum: [ENROLLED, NOT_ENROLLED, PAUSED, UNKNOWN]
+      enum: [ENROLLED, NOT_ENROLLED, PAUSED, COLLECTION_COMPLETED, UNKNOWN]
 
     ParticipantStats:
       type: object
@@ -4786,7 +4823,7 @@ components:
           format: date
         moduleFamily:
           type: string
-          enum: [USAGE_LIFECYCLE, BATTERY, DEVICE_TELEMETRY]
+          enum: [USAGE_LIFECYCLE, BATTERY, DEVICE_TELEMETRY, SENSOR, APP_RUNTIME]
         issueCode:
           type: string
           enum:
@@ -4804,6 +4841,11 @@ components:
             - TLS_FAILURE
             - CONNECTION_FAILURE
             - UPLOAD_FAILURE
+            - SENSOR_SAMPLE_QUARANTINED
+            - SENSOR_DEAD_LETTER_DROPPED
+            - APP_CRASH
+            - APP_CRASH_NATIVE
+            - APP_ANR
         count:
           type: integer
           minimum: 1
