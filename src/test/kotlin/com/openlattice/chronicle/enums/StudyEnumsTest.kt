@@ -55,8 +55,8 @@ class StudyEnumsTest {
         } catch (expected: IllegalArgumentException) { /* expected */ }
     }
 
-    // ===== ParticipantDataType (17 values) =====
-    @Test fun testParticipantDataTypeCount() { assertEquals(17, ParticipantDataType.values().size) }
+    // ===== ParticipantDataType (19 values) =====
+    @Test fun testParticipantDataTypeCount() { assertEquals(19, ParticipantDataType.values().size) }
     @Test fun testParticipantDataTypeUsageEvents() { assertEquals("UsageEvents", ParticipantDataType.UsageEvents.name) }
     @Test fun testParticipantDataTypePreprocessed() { assertEquals("Preprocessed", ParticipantDataType.Preprocessed.name) }
     @Test fun testParticipantDataTypeAppUsageSurvey() { assertEquals("AppUsageSurvey", ParticipantDataType.AppUsageSurvey.name) }
@@ -82,6 +82,8 @@ class StudyEnumsTest {
                 "ConnectivityState",
                 "AppNetworkUsage",
                 "DeviceSettings",
+                "UploadDiagnostics",
+                "DataQualityAlerts",
             ),
             ParticipantDataType.values().drop(5).map(ParticipantDataType::name),
         )

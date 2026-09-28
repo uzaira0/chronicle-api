@@ -7,8 +7,8 @@ import org.junit.Test
 
 class UsageEventTypeTest {
 
-    // ===== ChronicleUsageEventType (26 values) =====
-    @Test fun testChronicleUsageEventTypeCount() { assertEquals(26, ChronicleUsageEventType.values().size) }
+    // ===== ChronicleUsageEventType (28 values) =====
+    @Test fun testChronicleUsageEventTypeCount() { assertEquals(28, ChronicleUsageEventType.values().size) }
 
     // Name tests
     @Test fun testNoneName() { assertEquals("NONE", ChronicleUsageEventType.NONE.name) }
