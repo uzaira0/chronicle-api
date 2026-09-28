@@ -90,6 +90,7 @@ public interface StudyApi {
         public const val COLLECTION_ACK_PATH: String = "/collection-ack"
         public const val ACKNOWLEDGMENTS_PATH: String = "/acknowledgments"
         public const val UPLOAD_STATUS_PATH: String = "/upload-status"
+        public const val DATA_DROPS_PATH: String = "/data-drops"
     }
 
 
@@ -475,6 +476,15 @@ public interface StudyApi {
     public fun getIosUploadStatus(
         @Path(STUDY_ID) studyId: UUID,
     ): Map<String, IosUploadStatus>
+
+    /**
+     * Per participant, the data their Android devices discarded locally in the last 30 days
+     * (age/capacity expiry, low-storage eviction), from redacted upload diagnostics.
+     */
+    @GET(BASE + STUDY_ID_PATH + PARTICIPANTS_PATH + ANDROID_PATH + DATA_DROPS_PATH)
+    public fun getAndroidDataDrops(
+        @Path(STUDY_ID) studyId: UUID,
+    ): Map<String, List<AndroidDataDrop>>
 
 
     /**

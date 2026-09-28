@@ -1705,6 +1705,25 @@ paths:
                 additionalProperties:
                   $ref: '#/components/schemas/IosUploadStatus'
 
+  /chronicle/v3/study/{studyId}/participants/android/data-drops:
+    get:
+      tags: [Study]
+      summary: Get data Android devices discarded locally in the last 30 days
+      operationId: getAndroidDataDrops
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+      responses:
+        '200':
+          description: Map of participant ID to local drop counts by reason
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/AndroidDataDrop'
+
   /chronicle/v3/study/{studyId}/participants/data:
     get:
       tags: [Study]
@@ -3885,6 +3904,26 @@ components:
         tudSubmissionCount:
           type: integer
 
+    AndroidDataDrop:
+      type: object
+      required:
+        - issueCode
+        - count
+        - lastOccurredAt
+      properties:
+        issueCode:
+          type: string
+          enum:
+            - SENSOR_AGE_EXPIRED
+            - SENSOR_CAPACITY_DROPPED
+            - SENSOR_DEAD_LETTER_DROPPED
+            - USAGE_QUEUE_EVICTED
+        count:
+          type: integer
+          format: int64
+        lastOccurredAt:
+          type: string
+          format: date-time
     IosUploadStatus:
       type: object
       required:
@@ -4846,6 +4885,9 @@ components:
             - APP_CRASH
             - APP_CRASH_NATIVE
             - APP_ANR
+            - SENSOR_AGE_EXPIRED
+            - SENSOR_CAPACITY_DROPPED
+            - USAGE_QUEUE_EVICTED
         count:
           type: integer
           minimum: 1
