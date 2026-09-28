@@ -1708,7 +1708,7 @@ paths:
   /chronicle/v3/study/{studyId}/participants/android/data-drops:
     get:
       tags: [Study]
-      summary: Get data Android devices discarded locally in the last 30 days
+      summary: Get retained data Android devices discarded locally
       operationId: getAndroidDataDrops
       parameters:
         - $ref: '#/components/parameters/studyId'
@@ -1723,6 +1723,61 @@ paths:
                   type: array
                   items:
                     $ref: '#/components/schemas/AndroidDataDrop'
+
+  /chronicle/v3/study/{studyId}/participants/android/diagnostics:
+    get:
+      tags: [Study]
+      summary: Get retained Android upload diagnostic and data-quality alert history
+      operationId: getAndroidDiagnostics
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - name: participantId
+          in: query
+          schema:
+            type: string
+        - name: deviceId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: from
+          in: query
+          description: Inclusive diagnostic day or UTC calendar day of alert creation.
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          description: Inclusive diagnostic day or UTC calendar day of alert creation.
+          schema:
+            type: string
+            format: date
+        - name: moduleFamily
+          in: query
+          schema:
+            type: string
+        - name: issueCode
+          in: query
+          schema:
+            type: string
+        - name: cursor
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+            default: 50
+      responses:
+        '200':
+          description: Stable keyset page of per-day/per-device diagnostics and redacted alerts.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AndroidDiagnosticsPage'
 
   /chronicle/v3/study/{studyId}/participants/data:
     get:
@@ -3924,6 +3979,78 @@ components:
         lastOccurredAt:
           type: string
           format: date-time
+    AndroidDiagnosticCodeSummary:
+      type: object
+      required: [eventId, moduleFamily, issueCode, occurrenceCount, firstOccurredAt, lastOccurredAt]
+      properties:
+        eventId:
+          type: string
+        moduleFamily:
+          type: string
+        issueCode:
+          type: string
+        occurrenceCount:
+          type: integer
+          format: int64
+        firstOccurredAt:
+          type: string
+          format: date-time
+        lastOccurredAt:
+          type: string
+          format: date-time
+        httpStatus:
+          type: integer
+          nullable: true
+        errorType:
+          type: string
+          nullable: true
+    DataQualityAlertHistoryItem:
+      type: object
+      required: [alertId, alertType, score, createdAt]
+      properties:
+        alertId:
+          type: string
+          format: uuid
+        alertType:
+          type: string
+        score:
+          type: number
+          format: double
+        createdAt:
+          type: string
+          format: date-time
+    AndroidDiagnosticsHistoryRow:
+      type: object
+      required: [participantId, day, codes]
+      properties:
+        participantId:
+          type: string
+        deviceId:
+          type: string
+          format: uuid
+          nullable: true
+        day:
+          type: string
+          format: date
+        codes:
+          type: array
+          items:
+            $ref: '#/components/schemas/AndroidDiagnosticCodeSummary'
+        dataQualityAlert:
+          allOf:
+            - $ref: '#/components/schemas/DataQualityAlertHistoryItem'
+          nullable: true
+    AndroidDiagnosticsPage:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AndroidDiagnosticsHistoryRow'
+        nextCursor:
+          type: string
+          nullable: true
     IosUploadStatus:
       type: object
       required:

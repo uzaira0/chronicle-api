@@ -28,6 +28,7 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -91,6 +92,7 @@ public interface StudyApi {
         public const val ACKNOWLEDGMENTS_PATH: String = "/acknowledgments"
         public const val UPLOAD_STATUS_PATH: String = "/upload-status"
         public const val DATA_DROPS_PATH: String = "/data-drops"
+        public const val DIAGNOSTICS_PATH: String = "/diagnostics"
     }
 
 
@@ -478,13 +480,27 @@ public interface StudyApi {
     ): Map<String, IosUploadStatus>
 
     /**
-     * Per participant, the data their Android devices discarded locally in the last 30 days
-     * (age/capacity expiry, low-storage eviction), from redacted upload diagnostics.
+     * Compatibility projection of retained local data-drop diagnostics. Use getAndroidDiagnostics
+     * for the complete day/device history and all diagnostic codes.
      */
     @GET(BASE + STUDY_ID_PATH + PARTICIPANTS_PATH + ANDROID_PATH + DATA_DROPS_PATH)
     public fun getAndroidDataDrops(
         @Path(STUDY_ID) studyId: UUID,
     ): Map<String, List<AndroidDataDrop>>
+
+    /** Full keyset-paginated upload-diagnostic and data-quality alert history. */
+    @GET(BASE + STUDY_ID_PATH + PARTICIPANTS_PATH + ANDROID_PATH + DIAGNOSTICS_PATH)
+    public fun getAndroidDiagnostics(
+        @Path(STUDY_ID) studyId: UUID,
+        @Query("participantId") participantId: String? = null,
+        @Query("deviceId") deviceId: UUID? = null,
+        @Query("from") fromDay: LocalDate? = null,
+        @Query("to") toDay: LocalDate? = null,
+        @Query("moduleFamily") moduleFamily: String? = null,
+        @Query("issueCode") issueCode: String? = null,
+        @Query("cursor") cursor: String? = null,
+        @Query("limit") limit: Int = 50,
+    ): AndroidDiagnosticsPage
 
 
     /**
