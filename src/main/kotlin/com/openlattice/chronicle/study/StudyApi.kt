@@ -509,10 +509,10 @@ public interface StudyApi {
      * @param studyId studyId
      * @param dataType one of  UsageEvents, Preprocessed,AppUsageSurvey, IOSSensor
      * @param participantIds ids of participants
-     * @param startDateTime an optional lower bound date
-     * @param endDateTime an optional upper bound date
+     * @param startDateTime the required lower bound date
+     * @param endDateTime the required upper bound date
      */
-    @GET(BASE + STUDY_ID_PATH + PARTICIPANTS_PATH + DATA_PATH)
+    @GET(BASE + STUDY_ID_PATH + PARTICIPANTS_PATH + DATA_PATH + "?responseType=json")
     public fun getParticipantsData(
         @Path(STUDY_ID) studyId: UUID,
         @Query(DATA_TYPE) dataType: ParticipantDataType,

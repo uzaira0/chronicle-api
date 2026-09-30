@@ -219,6 +219,7 @@ dependencies {
     implementation "org.glassfish.expressly:expressly:${expressly_version}"
 
     testImplementation "junit:junit:${junit_version}"
+    testImplementation "org.yaml:snakeyaml:${snakeyaml_version}"
     
     /*
      * TESTING

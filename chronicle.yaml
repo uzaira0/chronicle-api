@@ -1791,31 +1791,64 @@ paths:
           required: true
           schema:
             type: string
-        - name: participantIds
+        - name: participantId
           in: query
+          required: true
+          style: form
+          explode: true
+          schema:
+            type: array
+            minItems: 1
+            maxItems: 100
+            uniqueItems: true
+            items:
+              type: string
+        - name: startDate
+          in: query
+          required: true
+          description: Lower bound of a positive range of at most 31 elapsed days.
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          required: true
+          description: Upper bound of the bounded export range.
+          schema:
+            type: string
+            format: date-time
+        - name: responseType
+          in: query
+          schema:
+            type: string
+            enum: [csv, json]
+            default: csv
+        - name: fileName
+          in: query
+          schema:
+            type: string
+            maxLength: 64
+        - name: sensorTypes
+          in: query
+          style: form
+          explode: true
           schema:
             type: array
             items:
               type: string
-        - name: startDateTime
-          in: query
-          schema:
-            type: string
-            format: date-time
-        - name: endDateTime
-          in: query
-          schema:
-            type: string
-            format: date-time
       responses:
         '200':
-          description: Participant data rows
+          description: Participant data rows in the selected responseType (CSV by default).
           content:
             application/json:
               schema:
                 type: array
+                maxItems: 50000
                 items:
                   type: object
+            text/csv:
+              schema:
+                type: string
 
   # ==========================================================================
   # Survey API — /chronicle/v3/survey
