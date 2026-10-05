@@ -26,6 +26,11 @@ public data class QuestionnaireUpdate(
     val questions: List<Question>?
 ) {
     init {
+        // Responses are keyed by question title, so an update must keep the same title rules as create.
+        questions?.map { it.title }?.let { questionTitles ->
+            check(questionTitles.none { it.isBlank() }) { "question titles cannot be blank" }
+            check(questionTitles.distinct().size == questionTitles.size) { "question titles should be unique" }
+        }
         recurrenceRule?.let {
             recurrenceRule = RecurrenceRule(it).toString()
         }
