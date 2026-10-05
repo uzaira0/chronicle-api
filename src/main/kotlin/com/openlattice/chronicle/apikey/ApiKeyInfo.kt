@@ -19,5 +19,8 @@ public data class ApiKeyInfo(
     /** Set on mobile keys; null on admin keys. Mobile keys are bound to a single participant. */
     val participantId: String? = null,
     /** Set on mobile keys; null on admin keys. Mobile keys are bound to a single device. */
-    val deviceId: UUID? = null
+    val deviceId: UUID? = null,
+    /** Who created the key; set only on authentication, where the key's rights are capped at theirs. */
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    val createdBy: String? = null
 )
