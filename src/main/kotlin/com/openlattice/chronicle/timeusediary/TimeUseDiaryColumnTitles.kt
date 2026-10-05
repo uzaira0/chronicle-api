@@ -35,7 +35,7 @@ public class TimeUseDiaryColumnTitles private constructor() {
         public const val SECONDARY_BOOK_TYPE: String = "Secondary_Book_Type"
         public const val SECONDARY_MEDIA_ACTIVITY: String = "Secondary_Media_Activity"
         public const val SECONDARY_MEDIA_AGE: String = "Secondary_Media_Age"
-        public const val SECONDARY_MEDIA_NAME: String = "Secondary_Media_Age"
+        public const val SECONDARY_MEDIA_NAME: String = "Secondary_Media_Name"
         public const val SLEEP_ARRANGEMENT: String = "Sleeping_Arrangement"
         public const val SLEEP_HOURS: String = "Sleep_Hours"
         public const val STUDY_ID: String = "Study_ID"
@@ -87,6 +87,7 @@ public class TimeUseDiaryColumnTitles private constructor() {
             WAKE_UP_TIME_AFTER_ACTIVITY_DAY to TimeUseDiaryQuestionCodes.WAKE_UP_TIME_AFTER_ACTIVITY_DAY,
             BEDTIME_AFTER_ACTIVITY_DAY to TimeUseDiaryQuestionCodes.BED_TIME_BEFORE_ACTIVITY_DAY,
             WAKE_UP_TODAY to TimeUseDiaryQuestionCodes.TODAY_WAKEUP_TIME,
+            WAKE_UP_YESTERDAY to TimeUseDiaryQuestionCodes.DAY_START_TIME,
         )
     }
 }
