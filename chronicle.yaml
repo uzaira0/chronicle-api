@@ -3366,22 +3366,42 @@ components:
       properties:
         title:
           type: string
+          nullable: true
         description:
           type: string
+          nullable: true
         contact:
           type: string
+          nullable: true
         version:
           type: string
+          nullable: true
         group:
           type: string
+          nullable: true
         notificationsEnabled:
           type: boolean
+          nullable: true
         lat:
           type: number
           format: double
+          nullable: true
         lon:
           type: number
           format: double
+          nullable: true
+        settings:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/StudySetting'
+          nullable: true
+        modules:
+          type: object
+          additionalProperties: true
+          nullable: true
+        storage:
+          type: string
+          nullable: true
 
     StudySetting:
       type: object
@@ -3545,23 +3565,18 @@ components:
 
     CollectionModuleSetting:
       type: object
-      description: >-
-        Per-module configuration entry inside an AndroidDataCollectionSetting.
-        Carries no apiKey, signing secret, or participantId — pure configuration.
+      description: "Per-module configuration entry inside an AndroidDataCollectionSetting. Carries no apiKey,\
+        \ signing secret, or participantId \u2014 pure configuration."
       properties:
         enabled:
           type: boolean
-          description: >-
-            Whether the module is active. Privacy-sensitive modules are never
-            enabled implicitly.
+          description: Whether the module is active. Privacy-sensitive modules are never enabled implicitly.
         required:
           type: boolean
-          description: >-
-            Whether the module is mandatory for study participation (per-module
-            consent design §3.1). Meaningful only when enabled. Required modules
-            must be accepted to enroll and cannot be self-disabled in the Data
-            Sharing surface; optional modules (the default) are participant-toggleable.
-            Defaults false for legacy settings.
+          description: "Whether the module is mandatory for study participation (per-module consent design\
+            \ \xA73.1). Meaningful only when enabled. Required modules must be accepted to enroll and cannot\
+            \ be self-disabled in the Data Sharing surface; optional modules (the default) are participant-toggleable.\
+            \ Defaults false for legacy settings."
         collectionCadence:
           $ref: '#/components/schemas/CollectionCadence'
         uploadCadence:
@@ -3572,13 +3587,12 @@ components:
           $ref: '#/components/schemas/NetworkPolicy'
         sensorPolicy:
           allOf:
-            - $ref: '#/components/schemas/AndroidSensorSetting'
+          - $ref: '#/components/schemas/AndroidSensorSetting'
           nullable: true
-          description: >-
-            Per-sensor sampling policy (rate Hz + duty cycle). Only the per-sensor
-            sensor_* modules populate this — each carries its own rate/duty (web-editable,
-            mobile read-only); every non-sensor module leaves it null. Also decodes the
-            legacy hardware_sensors.sensorPolicy shape for old data.
+          description: "Per-sensor sampling policy (rate Hz + duty cycle). Only the per-sensor sensor_* modules\
+            \ populate this \u2014 each carries its own rate/duty (web-editable, mobile read-only); every\
+            \ non-sensor module leaves it null. Also decodes the legacy hardware_sensors.sensorPolicy shape\
+            \ for old data."
         healthConnectRecordTypes:
           type: array
           uniqueItems: true
@@ -3586,29 +3600,55 @@ components:
           items:
             type: string
             enum:
-              - steps
-              - distance
-              - heart_rate
-              - total_calories_burned
-              - active_calories_burned
-              - floors_climbed
-              - resting_heart_rate
-              - oxygen_saturation
-              - respiratory_rate
-              - sleep
-              - exercise
-              - heart_rate_variability
-              - body_temperature
-              - skin_temperature
+            - steps
+            - distance
+            - heart_rate
+            - total_calories_burned
+            - active_calories_burned
+            - floors_climbed
+            - resting_heart_rate
+            - oxygen_saturation
+            - respiratory_rate
+            - sleep
+            - exercise
+            - heart_rate_variability
+            - body_temperature
+            - skin_temperature
         disableDisposition:
           allOf:
-            - $ref: '#/components/schemas/CollectionDataDisposition'
+          - $ref: '#/components/schemas/CollectionDataDisposition'
           nullable: true
-          description: >-
-            For a mid-study disable (enabled=false), the researcher-chosen disposition
-            for data already collected on-device but not yet uploaded. Set only when
-            enabled=false; left null (and ignored by the device) while the module is
-            enabled. The device acts on it only on the ACTIVE -> INACTIVE transition.
+          description: For a mid-study disable (enabled=false), the researcher-chosen disposition for data
+            already collected on-device but not yet uploaded. Set only when enabled=false; left null (and
+            ignored by the device) while the module is enabled. The device acts on it only on the ACTIVE ->
+            INACTIVE transition.
+        interactionPolicy:
+          type: object
+          nullable: true
+          additionalProperties: false
+          properties:
+            gridRows:
+              type: integer
+              minimum: 1
+              default: 4
+            gridCols:
+              type: integer
+              minimum: 1
+              default: 3
+            captureClicks:
+              type: boolean
+              default: true
+            captureScrolls:
+              type: boolean
+              default: true
+            captureExactPosition:
+              type: boolean
+              default: true
+            captureElementPosition:
+              type: boolean
+              default: true
+      required:
+      - enabled
 
     CollectionDataDisposition:
       type: string
@@ -3691,11 +3731,9 @@ components:
 
     CollectionAcknowledgmentEntry:
       type: object
-      description: >-
-        One append-only record in a study's participant collection-acknowledgment
-        trail, surfaced to researchers alongside the immutable settings audit
-        (design §5.3, §11). recordedAt is the server-stamped authoritative anchor;
-        acknowledgedAt is the advisory device-reported time.
+      description: "One append-only record in a study's participant collection-acknowledgment trail, surfaced\
+        \ to researchers alongside the immutable settings audit (design \xA75.3, \xA711). recordedAt is the\
+        \ server-stamped authoritative anchor; acknowledgedAt is the advisory device-reported time."
       properties:
         id:
           type: string
@@ -3717,12 +3755,13 @@ components:
           description: Device-reported acknowledgment time (advisory).
         declinedModules:
           type: array
-          description: The modules the participant declined in this snapshot (per-module consent design §3.3).
+          description: "The modules the participant declined in this snapshot (per-module consent design \xA7\
+            3.3)."
           items:
             $ref: '#/components/schemas/CollectionModuleId'
         trigger:
           allOf:
-            - $ref: '#/components/schemas/CollectionConsentTrigger'
+          - $ref: '#/components/schemas/CollectionConsentTrigger'
           description: What produced this decision (enrollment / toggle / settings-change / withdrawal).
         recordedAt:
           type: string
@@ -3741,8 +3780,19 @@ components:
           nullable: true
         manifestDigest:
           type: string
-          pattern: '^[0-9a-f]{64}$'
+          pattern: ^[0-9a-f]{64}$
           nullable: true
+        unavailableModules:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/CollectionModuleId'
+      required:
+      - studyId
+      - participantId
+      - sourceDeviceId
+      - acknowledgedModules
+      - acknowledgedAt
 
     AndroidDataCollectionSetting:
       type: object
@@ -3770,39 +3820,37 @@ components:
 
     StudyEncryptionSetting:
       type: object
-      description: >-
-        Envelope-encryption opt-in for a study (HIPAA-2028 "W2"). A polymorphic
-        StudySetting subtype bound to the `Encryption` study setting type, returned
-        from GET /settings/type/Encryption and riding the existing @class-discriminated
-        StudySetting mechanism. When `enabled`, the Android app uploads via the
-        encrypted endpoint, sealing each batch's content key against `publicKeyPem`
-        (identified by `keyId`). Only the public key is ever exposed; the matching
-        private key lives in Vault and never leaves the server.
+      description: Envelope-encryption opt-in for a study (HIPAA-2028 "W2"). A polymorphic StudySetting subtype
+        bound to the `Encryption` study setting type, returned from GET /settings/type/Encryption and riding
+        the existing @class-discriminated StudySetting mechanism. When `enabled`, the Android app uploads
+        via the encrypted endpoint, sealing each batch's content key against `publicKeyPem` (identified by
+        `keyId`). Only the public key is ever exposed; the matching private key lives in Vault and never leaves
+        the server.
       properties:
-        "@class":
+        '@class':
           type: string
         enabled:
           type: boolean
           default: false
-          description: >-
-            Whether envelope-encrypted uploads are required for this study. Defaults
-            false (legacy plaintext uploads).
+          description: Whether envelope-encrypted uploads are required for this study. Defaults false (legacy
+            plaintext uploads).
         keyId:
           type: string
-          description: >-
-            Stable identifier of the active study key pair. Echoed back in each
-            EncryptedEnvelope.keyId so the server selects the matching private key for
-            decryption and supports key rotation.
+          description: Stable identifier of the active study key pair. Echoed back in each EncryptedEnvelope.keyId
+            so the server selects the matching private key for decryption and supports key rotation.
         algorithm:
           type: string
-          description: >-
-            Hybrid envelope algorithm in use (e.g. "RSA-OAEP-256+A256GCM"): RSA-OAEP
-            with SHA-256 for key wrapping plus AES-256-GCM for content.
+          description: 'Hybrid envelope algorithm in use (e.g. "RSA-OAEP-256+A256GCM"): RSA-OAEP with SHA-256
+            for key wrapping plus AES-256-GCM for content.'
         publicKeyPem:
           type: string
-          description: >-
-            PEM-encoded RSA public key the device wraps each batch's AES-256-GCM
-            content key against. Public key only; the private key lives in Vault.
+          description: PEM-encoded RSA public key the device wraps each batch's AES-256-GCM content key against.
+            Public key only; the private key lives in Vault.
+        mlkemPublicKey:
+          type: string
+          description: Base64 ML-KEM-1024 public key for hybrid wrapping; empty for legacy RSA-only settings.
+      discriminator:
+        propertyName: '@class'
 
     EncryptedEnvelope:
       type: object
@@ -3980,17 +4028,59 @@ components:
         studyId:
           type: string
           format: uuid
-        lastUpload:
-          type: string
-          format: date-time
         androidLastPing:
           type: string
           format: date-time
+          nullable: true
         iosLastPing:
           type: string
           format: date-time
-        tudSubmissionCount:
-          type: integer
+          nullable: true
+        androidFirstDate:
+          type: string
+          format: date-time
+          nullable: true
+        androidLastDate:
+          type: string
+          format: date-time
+          nullable: true
+        androidUniqueDates:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            format: date
+        iosFirstDate:
+          type: string
+          format: date-time
+          nullable: true
+        iosLastDate:
+          type: string
+          format: date-time
+          nullable: true
+        iosUniqueDates:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            format: date
+        tudFirstDate:
+          type: string
+          format: date-time
+          nullable: true
+        tudLastDate:
+          type: string
+          format: date-time
+          nullable: true
+        tudUniqueDates:
+          type: array
+          uniqueItems: true
+          items:
+            type: string
+            format: date
+      required:
+      - studyId
+      - participantId
 
     AndroidDataDrop:
       type: object
@@ -4223,7 +4313,7 @@ components:
       type: object
       properties:
         sensor:
-          type: string
+          $ref: '#/components/schemas/AndroidSensorType'
         values:
           type: array
           items:
@@ -4231,6 +4321,37 @@ components:
         timestamp:
           type: string
           format: date-time
+        id:
+          type: string
+          format: uuid
+        timezone:
+          type: string
+          maxLength: 100
+        x:
+          type: number
+          format: float
+          nullable: true
+        y:
+          type: number
+          format: float
+          nullable: true
+        z:
+          type: number
+          format: float
+          nullable: true
+        w:
+          type: number
+          format: float
+          nullable: true
+        accuracy:
+          type: integer
+          format: int32
+          nullable: true
+      required:
+      - id
+      - sensor
+      - timestamp
+      - timezone
 
     BatterySample:
       type: object
@@ -5209,10 +5330,6 @@ components:
           type: string
         deviceId:
           type: string
-        sensors:
-          type: array
-          items:
-            type: string
         screenWidthPixels:
           type: integer
           nullable: true
@@ -5233,11 +5350,26 @@ components:
           description: Display rotation as a Surface.ROTATION_* ordinal (0..3); null if unavailable.
         interactionPointerCaptureCapability:
           type: string
-          enum: [PLATFORM_API_UNAVAILABLE, REQUIRES_INPUT_INTERCEPTION]
+          enum:
+          - PLATFORM_API_UNAVAILABLE
+          - REQUIRES_INPUT_INTERCEPTION
           nullable: true
-          description: >-
-            Device/API-specific reason exact finger coordinates are unavailable to Chronicle's
+          description: Device/API-specific reason exact finger coordinates are unavailable to Chronicle's
             non-interfering collector; null on legacy clients.
+        availableSensors:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/AndroidSensorType'
+        unavailableSensors:
+          type: array
+          uniqueItems: true
+          items:
+            $ref: '#/components/schemas/AndroidSensorType'
+        reportedAt:
+          type: string
+          format: date-time
+          nullable: true
 
     SensorDataSample:
       type: object
