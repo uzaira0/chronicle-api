@@ -9,8 +9,8 @@ import org.junit.Test
 
 class ParticipationStatusEnumTest {
 
-    // ===== ParticipationStatus (5 values) =====
-    @Test fun testParticipationStatusCount() { assertEquals(5, ParticipationStatus.values().size) }
+    // ===== ParticipationStatus (6 values) =====
+    @Test fun testParticipationStatusCount() { assertEquals(6, ParticipationStatus.values().size) }
     @Test fun testParticipationStatusEnrolled() { assertEquals("ENROLLED", ParticipationStatus.ENROLLED.name) }
     @Test fun testParticipationStatusNotEnrolled() { assertEquals("NOT_ENROLLED", ParticipationStatus.NOT_ENROLLED.name) }
     @Test fun testParticipationStatusPaused() { assertEquals("PAUSED", ParticipationStatus.PAUSED.name) }

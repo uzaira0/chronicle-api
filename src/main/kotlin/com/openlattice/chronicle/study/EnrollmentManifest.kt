@@ -18,6 +18,7 @@ public data class EnrollmentManifest(
     val settingsVersion: Int,
     val issuedAt: OffsetDateTime,
     val expiresAt: OffsetDateTime,
+    val withdrawalMode: WithdrawalMode = WithdrawalMode.ERASE,
 ) {
     init {
         require(schemaVersion == CURRENT_SCHEMA_VERSION) { "Unsupported enrollment manifest schema: $schemaVersion" }

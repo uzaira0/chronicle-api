@@ -97,8 +97,8 @@ class StudyEnumsTest {
         } catch (expected: IllegalArgumentException) { /* expected */ }
     }
 
-    // ===== StudySettingType (10 values) =====
-    @Test fun testStudySettingTypeCount() { assertEquals(10, StudySettingType.values().size) }
+    // ===== StudySettingType (11 values) =====
+    @Test fun testStudySettingTypeCount() { assertEquals(11, StudySettingType.values().size) }
     @Test fun testStudySettingTypeDataCollection() { assertEquals("DataCollection", StudySettingType.DataCollection.name) }
     @Test fun testStudySettingTypeNotifications() { assertEquals("Notifications", StudySettingType.Notifications.name) }
     @Test fun testStudySettingTypeSensor() { assertEquals("Sensor", StudySettingType.Sensor.name) }

@@ -439,8 +439,9 @@ paths:
       responses:
         '202':
           description: |
-            Withdrawal accepted. Participation is marked NOT_ENROLLED, data
-            deletion jobs are queued, and the device API key is revoked.
+            Withdrawal accepted. Participation is marked NOT_ENROLLED and the device
+            API key is revoked. Data collected before withdrawal stays available by
+            default; studies configured for ERASE quarantine it for erasure after seven days.
           content:
             application/json:
               schema:
@@ -3295,7 +3296,8 @@ components:
         Accepted participant self-service withdrawal. `requestId` is the exact
         client-supplied UUID bound to the authenticated credential, and exact
         retries observe the same response. The first winning withdrawal owns
-        the durable deletion job. A later request from another device records
+        the durable deletion job only when the study selects ERASE. KEEP_PRIOR_DATA
+        returns no deletion job and preserves prior data. A later request from another device records
         `alreadyWithdrawn: true` and may return no deletion job IDs rather than
         claiming the first device's operation.
       required:
@@ -3318,11 +3320,11 @@ components:
             format: uuid
           description: >-
             Deletion jobs owned by this exact withdrawal request. Empty when
-            `alreadyWithdrawn` is true and another request already owns the
+            the study keeps prior data, or `alreadyWithdrawn` is true and another request already owns the
             participant's durable erasure operation.
         alreadyWithdrawn:
           type: boolean
-          description: True when the participant was already NOT_ENROLLED before this call.
+          description: True when a prior withdrawal or erasure already applies to the participant.
 
     DeviceEnrollmentEvent:
       type: object
@@ -4054,10 +4056,14 @@ components:
           uniqueItems: true
           items:
             type: string
+        withdrawnAt:
+          type: string
+          format: date-time
+          nullable: true
 
     ParticipationStatus:
       type: string
-      enum: [ENROLLED, NOT_ENROLLED, PAUSED, COLLECTION_COMPLETED, UNKNOWN]
+      enum: [ENROLLED, NOT_ENROLLED, PAUSED, COLLECTION_COMPLETED, UNKNOWN, ERASED]
 
     ParticipantStats:
       type: object
