@@ -37,9 +37,7 @@ public data class Questionnaire(
     init {
         check(questions.isNotEmpty()) { "questions must be non-empty" }
         check(title.isNotBlank()) { "title cannot be blank" }
-        val questionTitles = questions.map { it.title }
-        check(questionTitles.none { it.isBlank() }) { "question titles cannot be blank" }
-        check(questionTitles.distinct().size == questionTitles.size) { "question titles should be unique" }
+        validateQuestionTitles(questions)
 
         // for multiple choice questions, ensure that choices are unique
         questions.forEach {
@@ -51,6 +49,12 @@ public data class Questionnaire(
             recurrenceRule = RecurrenceRule(it).toString()
         }
     }
+}
+
+internal fun validateQuestionTitles(questions: List<Question>) {
+    val questionTitles = questions.map { it.title }
+    check(questionTitles.none { it.isBlank() }) { "question titles cannot be blank" }
+    check(questionTitles.distinct().size == questionTitles.size) { "question titles should be unique" }
 }
 
 public data class Question(
