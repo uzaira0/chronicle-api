@@ -1705,25 +1705,6 @@ paths:
                 additionalProperties:
                   $ref: '#/components/schemas/IosUploadStatus'
 
-  /chronicle/v3/study/{studyId}/participants/android/data-drops:
-    get:
-      tags: [Study]
-      summary: Get retained data Android devices discarded locally
-      operationId: getAndroidDataDrops
-      parameters:
-        - $ref: '#/components/parameters/studyId'
-      responses:
-        '200':
-          description: Map of participant ID to local drop counts by reason
-          content:
-            application/json:
-              schema:
-                type: object
-                additionalProperties:
-                  type: array
-                  items:
-                    $ref: '#/components/schemas/AndroidDataDrop'
-
   /chronicle/v3/study/{studyId}/participants/android/diagnostics:
     get:
       tags: [Study]

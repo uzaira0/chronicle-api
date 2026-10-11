@@ -73,7 +73,6 @@ public interface StudyApi {
         public const val UPLOAD_PATH: String = "/upload"
         public const val SENSORS_PATH: String = "/sensors"
         public const val SETTINGS_PATH: String = "/settings"
-        public const val PERMISSIONS_PATH: String = "/permissions"
         public const val SETTING_TYPE_PATH: String = "/type/{$SETTING_TYPE}"
         public const val STATS_PATH: String = "/stats"
         public const val STATUS_PATH: String = "/status"
@@ -91,7 +90,6 @@ public interface StudyApi {
         public const val COLLECTION_ACK_PATH: String = "/collection-ack"
         public const val ACKNOWLEDGMENTS_PATH: String = "/acknowledgments"
         public const val UPLOAD_STATUS_PATH: String = "/upload-status"
-        public const val DATA_DROPS_PATH: String = "/data-drops"
         public const val DIAGNOSTICS_PATH: String = "/diagnostics"
     }
 
@@ -193,25 +191,6 @@ public interface StudyApi {
         @Path(SETTING_TYPE) settingType: StudySettingType,
         @Body settings: StudySetting,
     ): OK
-
-    /**
-     * Retrieves the study permissions for a study.
-     *
-     * Requires owner permissions to read the ACL.
-     */
-    @GET(BASE + STUDY_ID_PATH + PERMISSIONS_PATH)
-    public fun getStudyPermissions(@Path(STUDY_ID) studyId: UUID): StudyPermissions
-
-    /**
-     * Updates the permissions for a study.
-     *
-     * Requires owner permissions to modify the ACL.
-     */
-    @POST(BASE + STUDY_ID_PATH + PERMISSIONS_PATH)
-    public fun updateStudyPermissions(
-        @Path(STUDY_ID) studyId: UUID,
-        @Body permissionsUpdate: StudyPermissionsUpdate
-    ): StudyPermissions
 
     /**
      * Deletes an existing study, its associations to any organizations, and removes
@@ -478,15 +457,6 @@ public interface StudyApi {
     public fun getIosUploadStatus(
         @Path(STUDY_ID) studyId: UUID,
     ): Map<String, IosUploadStatus>
-
-    /**
-     * Compatibility projection of retained local data-drop diagnostics. Use getAndroidDiagnostics
-     * for the complete day/device history and all diagnostic codes.
-     */
-    @GET(BASE + STUDY_ID_PATH + PARTICIPANTS_PATH + ANDROID_PATH + DATA_DROPS_PATH)
-    public fun getAndroidDataDrops(
-        @Path(STUDY_ID) studyId: UUID,
-    ): Map<String, List<AndroidDataDrop>>
 
     /** Full keyset-paginated upload-diagnostic and data-quality alert history. */
     @GET(BASE + STUDY_ID_PATH + PARTICIPANTS_PATH + ANDROID_PATH + DIAGNOSTICS_PATH)

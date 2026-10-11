@@ -133,35 +133,4 @@ public enum class ChronicleStudyRole(
         return permissions.contains(permission)
     }
 
-    /**
-     * Checks if this role has all of the specified permissions.
-     *
-     * @param requiredPermissions The permissions to check.
-     * @return true if the role has all permissions, false otherwise.
-     */
-    public fun hasAllPermissions(requiredPermissions: Set<StudyPermission>): Boolean {
-        return permissions.containsAll(requiredPermissions)
-    }
-
-    /**
-     * Checks if this role has any of the specified permissions.
-     *
-     * @param requiredPermissions The permissions to check.
-     * @return true if the role has at least one of the permissions, false otherwise.
-     */
-    public fun hasAnyPermission(requiredPermissions: Set<StudyPermission>): Boolean {
-        return requiredPermissions.any { permissions.contains(it) }
-    }
-
-    public companion object {
-        /**
-         * Returns the minimum role required for a given permission.
-         *
-         * @param permission The permission to check.
-         * @return The minimum role that has this permission, or null if no role has it.
-         */
-        public fun minimumRoleFor(permission: StudyPermission): ChronicleStudyRole? {
-            return values().firstOrNull { it.hasPermission(permission) }
-        }
-    }
 }

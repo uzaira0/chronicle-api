@@ -163,25 +163,7 @@ class AuthorizationEnumsTest {
     @Test fun testAuditorPermissionCount() { assertEquals(2, ChronicleStudyRole.AUDITOR.permissions.size) }
 
     @Test fun testSystemAdminHasAllPermissions() { assertEquals(StudyPermission.values().size, ChronicleStudyRole.SYSTEM_ADMIN.permissions.size) }
-    @Test fun testSystemAdminHasAdmin() { assertTrue(ChronicleStudyRole.SYSTEM_ADMIN.hasPermission(StudyPermission.ADMIN)) }
 
-    @Test fun testHasAllPermissionsTrue() {
-        assertTrue(ChronicleStudyRole.SYSTEM_ADMIN.hasAllPermissions(setOf(StudyPermission.READ_STUDY, StudyPermission.ADMIN)))
-    }
-    @Test fun testHasAllPermissionsFalse() {
-        assertFalse(ChronicleStudyRole.RESEARCHER.hasAllPermissions(setOf(StudyPermission.READ_STUDY, StudyPermission.ADMIN)))
-    }
-    @Test fun testHasAnyPermissionTrue() {
-        assertTrue(ChronicleStudyRole.RESEARCHER.hasAnyPermission(setOf(StudyPermission.READ_STUDY, StudyPermission.ADMIN)))
-    }
-    @Test fun testHasAnyPermissionFalse() {
-        assertFalse(ChronicleStudyRole.AUDITOR.hasAnyPermission(setOf(StudyPermission.DELETE_DATA, StudyPermission.ADMIN)))
-    }
-
-    @Test fun testMinimumRoleForReadStudy() {
-        assertEquals(ChronicleStudyRole.RESEARCHER, ChronicleStudyRole.minimumRoleFor(StudyPermission.READ_STUDY))
-    }
-    @Test fun testMinimumRoleForAdmin() { assertEquals(ChronicleStudyRole.SYSTEM_ADMIN, ChronicleStudyRole.minimumRoleFor(StudyPermission.ADMIN)) }
 
     // ===== SystemRole (4 values) =====
     @Test fun testSystemRoleCount() { assertEquals(4, SystemRole.values().size) }
