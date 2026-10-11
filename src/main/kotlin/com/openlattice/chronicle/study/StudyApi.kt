@@ -83,7 +83,7 @@ public interface StudyApi {
         public const val INTERACTION_PATH: String = "/interaction"
         public const val ENCRYPTED_PATH: String = "/encrypted"
         public const val RETRIEVE: String = "retrieve"
-        public const val DATA_COLLECTION: String = "/data-collection/"
+        public const val DATA_COLLECTION: String = "/data-collection"
         public const val DEVICES_PATH: String = "/devices"
         public const val ANNOTATIONS_PATH: String = "/annotations"
         public const val AUDIT_PATH: String = "/audit"

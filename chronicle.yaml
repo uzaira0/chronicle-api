@@ -1613,7 +1613,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/StudyEncryptionSetting'
 
-  /chronicle/v3/study/{studyId}/data-collection/:
+  /chronicle/v3/study/{studyId}/data-collection:
     put:
       tags: [Study]
       summary: Set data collection settings for a study
