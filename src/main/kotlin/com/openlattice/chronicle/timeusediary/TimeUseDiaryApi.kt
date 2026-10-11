@@ -23,6 +23,7 @@ public interface TimeUseDiaryApi {
         public const val ORGANIZATION_ID: String = "organizationId"
         public const val PARTICIPANT_ID: String = "participantId"
         public const val START_DATE: String = "startDate"
+        public const val TIME_ZONE: String = "timeZone"
         public const val STUDY_ID: String = "studyId"
         public const val FILE_NAME: String = "fileName"
 
@@ -117,6 +118,7 @@ public interface TimeUseDiaryApi {
         @Path(STUDY_ID) studyId: UUID,
         @Query(START_DATE) startDateTime: OffsetDateTime,
         @Query(END_DATE) endDateTime: OffsetDateTime,
+        @Query(TIME_ZONE) timeZone: String? = null,
     ): Map<LocalDate, Set<UUID>>
 
     /**

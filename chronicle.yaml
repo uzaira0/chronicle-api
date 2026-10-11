@@ -2234,6 +2234,10 @@ paths:
           schema:
             type: string
             format: date-time
+        - name: timeZone
+          in: query
+          schema:
+            type: string
       responses:
         '200':
           description: Map of date to submission UUIDs
