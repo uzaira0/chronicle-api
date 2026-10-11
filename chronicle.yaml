@@ -45,6 +45,30 @@ tags:
 # Paths
 # ---------------------------------------------------------------------------
 paths:
+  /chronicle/v3/observability/browser-errors:
+    post:
+      summary: Count a browser failure without messages, URLs or stacks
+      operationId: reportBrowserError
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [kind]
+              properties:
+                kind:
+                  type: string
+                  enum: [ERROR, UNHANDLED_REJECTION]
+      responses:
+        '204':
+          description: Failure counted
+        '400':
+          description: Invalid or unredacted report
+        '413':
+          description: Report exceeds 2048 bytes
+
   # ==========================================================================
   # Study API — /chronicle/v3/study
   # ==========================================================================
