@@ -2,6 +2,8 @@ package com.openlattice.chronicle.study
 
 
 import com.openlattice.chronicle.android.AndroidDeviceSensorAvailability
+import com.openlattice.chronicle.collection.CollectionUploadEvidence
+import com.openlattice.chronicle.android.SensorUploadReceipt
 import com.openlattice.chronicle.android.AndroidSensorSample
 import com.openlattice.chronicle.android.AndroidSensorSetting
 import com.openlattice.chronicle.android.ChronicleData
@@ -72,6 +74,7 @@ public interface StudyApi {
         public const val ORGANIZATION_PATH: String = "/organization"
         public const val UPLOAD_PATH: String = "/upload"
         public const val SENSORS_PATH: String = "/sensors"
+        public const val RECEIPT_PATH: String = "/receipt"
         public const val SETTINGS_PATH: String = "/settings"
         public const val SETTING_TYPE_PATH: String = "/type/{$SETTING_TYPE}"
         public const val STATS_PATH: String = "/stats"
@@ -591,6 +594,15 @@ public interface StudyApi {
         @Header("X-Chronicle-Device-Id") sourceDeviceId: String,
         @Body data: List<AndroidSensorSample>,
     ): Int
+
+    @POST(V4_BASE + STUDY_ID_PATH + PARTICIPANT_PATH + PARTICIPANT_ID_PATH + ANDROID_PATH + SENSORS_PATH + RECEIPT_PATH)
+    public fun uploadAndroidSensorDataReceiptV4(
+        @Path(STUDY_ID) studyId: UUID,
+        @Path(PARTICIPANT_ID) participantId: String,
+        @Header("X-Chronicle-Device-Id") sourceDeviceId: String,
+        @Body data: List<AndroidSensorSample>,
+        @Header(CollectionUploadEvidence.SETTINGS_VERSION_HEADER) settingsVersion: Int? = null,
+    ): SensorUploadReceipt
 
     @Suppress("DEPRECATION")
     @POST(V4_BASE + STUDY_ID_PATH + PARTICIPANT_PATH + PARTICIPANT_ID_PATH + ANDROID_PATH + BATTERY_PATH)

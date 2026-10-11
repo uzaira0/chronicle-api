@@ -532,6 +532,37 @@ paths:
               schema:
                 type: integer
 
+  /chronicle/v4/study/{studyId}/participant/{participantId}/android/sensors/receipt:
+    post:
+      tags: [Study]
+      summary: Upload Android sensors with exact row receipts
+      operationId: uploadAndroidSensorDataReceiptV4
+      description: >-
+        Uploads the authenticated app instance's Android sensor sample batch.
+        The app-instance id is carried in `X-Chronicle-Device-Id`; the participant-
+        and device-bound API key is carried in `X-Api-Key`.
+      parameters:
+        - $ref: '#/components/parameters/studyId'
+        - $ref: '#/components/parameters/participantId'
+        - $ref: '#/components/parameters/chronicleDeviceIdHeader'
+        - $ref: '#/components/parameters/mobileApiKeyHeader'
+        - $ref: '#/components/parameters/collectionVersionHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/AndroidSensorSample'
+      responses:
+        '200':
+          description: Accepted, deliberately discarded, and held sample IDs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SensorUploadReceipt'
+
   /chronicle/v4/study/{studyId}/participant/{participantId}/android/battery:
     post:
       tags: [Study]
@@ -2988,6 +3019,14 @@ paths:
 # ---------------------------------------------------------------------------
 components:
   parameters:
+    collectionVersionHeader:
+      name: X-Chronicle-Collection-Version
+      in: header
+      required: false
+      description: Immutable settings revision recorded when this queue batch was captured.
+      schema:
+        type: integer
+        minimum: 1
     studyId:
       name: studyId
       in: path
@@ -3065,6 +3104,25 @@ components:
         example: '"7"'
 
   schemas:
+    SensorUploadReceipt:
+      type: object
+      required: [acceptedIds, discardedIds, heldIds, settingsVersion]
+      properties:
+        acceptedIds:
+          $ref: '#/components/schemas/SensorReceiptIds'
+        discardedIds:
+          $ref: '#/components/schemas/SensorReceiptIds'
+        heldIds:
+          $ref: '#/components/schemas/SensorReceiptIds'
+        settingsVersion:
+          type: integer
+          minimum: 1
+    SensorReceiptIds:
+      type: array
+      uniqueItems: true
+      items:
+        type: string
+        format: uuid
     StudySettingsPreconditionFailure:
       type: object
       description: |
