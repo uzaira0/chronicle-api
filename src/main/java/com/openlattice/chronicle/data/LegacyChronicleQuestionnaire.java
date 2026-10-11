@@ -18,6 +18,7 @@ public class LegacyChronicleQuestionnaire {
 
     @JsonCreator
     public LegacyChronicleQuestionnaire() {
+        // Jackson binds questionnaire details through setters.
     }
 
     @JsonCreator
@@ -58,10 +59,12 @@ public class LegacyChronicleQuestionnaire {
 
     @Override
     public boolean equals( Object o ) {
-        if ( this == o )
+        if ( this == o ) {
             return true;
-        if ( o == null || getClass() != o.getClass() )
+        }
+        if ( o == null || getClass() != o.getClass() ) {
             return false;
+        }
         LegacyChronicleQuestionnaire that = (LegacyChronicleQuestionnaire) o;
         return Objects.equals( questionnaireDetails, that.questionnaireDetails ) &&
                 Objects.equals( questions, that.questions );

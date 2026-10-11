@@ -37,10 +37,12 @@ public class ChronicleAppsUsageDetails {
     }
 
     @Override public boolean equals( Object o ) {
-        if ( this == o )
+        if ( this == o ) {
             return true;
-        if ( !( o instanceof ChronicleAppsUsageDetails ) )
+        }
+        if ( !( o instanceof ChronicleAppsUsageDetails ) ) {
             return false;
+        }
         ChronicleAppsUsageDetails chronicleAppsUsageDetails = (ChronicleAppsUsageDetails) o;
         return Objects.equals( entityDetails, chronicleAppsUsageDetails.entityDetails ) &&
                 Objects.equals( associationDetails, chronicleAppsUsageDetails.associationDetails );

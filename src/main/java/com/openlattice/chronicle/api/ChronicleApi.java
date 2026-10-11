@@ -2,12 +2,13 @@ package com.openlattice.chronicle.api;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.SetMultimap;
-import com.openlattice.chronicle.data.ChronicleAppsUsageDetails;
-import com.openlattice.chronicle.data.LegacyChronicleQuestionnaire;
 import com.openlattice.chronicle.data.ParticipationStatus;
 import com.openlattice.chronicle.sources.SourceDevice;
 import org.apache.olingo.commons.api.edm.FullQualifiedName;
-import retrofit2.http.*;
+import retrofit2.http.Body;
+import retrofit2.http.GET;
+import retrofit2.http.POST;
+import retrofit2.http.Path;
 
 import java.util.List;
 import java.util.Map;
