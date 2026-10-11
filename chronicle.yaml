@@ -4695,11 +4695,11 @@ components:
         scrollDeltaX:
           type: integer
           nullable: true
-          description: Signed horizontal scroll delta for a SCROLL event; null otherwise.
+          description: Signed horizontal scroll delta in pixels for a SCROLL event; null otherwise.
         scrollDeltaY:
           type: integer
           nullable: true
-          description: Signed vertical scroll delta for a SCROLL event; null otherwise.
+          description: Signed vertical scroll delta in pixels for a SCROLL event; null otherwise.
         eventTimeMillis:
           type: integer
           format: int64
