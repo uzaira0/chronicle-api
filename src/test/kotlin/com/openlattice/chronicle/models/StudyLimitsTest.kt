@@ -18,14 +18,14 @@ class StudyLimitsTest {
         val limits = StudyLimits()
         assertEquals(1.toShort(), limits.studyDuration.years)
         assertEquals(0.toShort(), limits.studyDuration.months)
-        assertEquals(0.toShort(), limits.studyDuration.days)
+        assertEquals(0, limits.studyDuration.days)
     }
 
     @Test fun testDefaultDataRetentionDuration() {
         val limits = StudyLimits()
         assertEquals(0.toShort(), limits.dataRetentionDuration.years)
         assertEquals(0.toShort(), limits.dataRetentionDuration.months)
-        assertEquals(90.toShort(), limits.dataRetentionDuration.days)
+        assertEquals(90, limits.dataRetentionDuration.days)
     }
 
     @Test fun testDefaultParticipantLimit() { assertEquals(25, StudyLimits().participantLimit) }

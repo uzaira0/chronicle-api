@@ -12,17 +12,17 @@ class StudyDurationTest {
     @Test fun testDefaultConstructor() { val d = StudyDuration(); assertNotNull(d) }
     @Test fun testDefaultYears() { assertEquals(0.toShort(), StudyDuration().years) }
     @Test fun testDefaultMonths() { assertEquals(0.toShort(), StudyDuration().months) }
-    @Test fun testDefaultDays() { assertEquals(0.toShort(), StudyDuration().days) }
+    @Test fun testDefaultDays() { assertEquals(0, StudyDuration().days) }
 
     @Test fun testCustomYears() { assertEquals(2.toShort(), StudyDuration(years = 2).years) }
     @Test fun testCustomMonths() { assertEquals(6.toShort(), StudyDuration(months = 6).months) }
-    @Test fun testCustomDays() { assertEquals(15.toShort(), StudyDuration(days = 15).days) }
+    @Test fun testCustomDays() { assertEquals(15, StudyDuration(days = 15).days) }
 
     @Test fun testCustomAllFields() {
         val d = StudyDuration(years = 3, months = 11, days = 365)
         assertEquals(3.toShort(), d.years)
         assertEquals(11.toShort(), d.months)
-        assertEquals(365.toShort(), d.days)
+        assertEquals(365, d.days)
     }
 
     @Test fun testEqualityIdentical() { assertEquals(StudyDuration(1, 2, 3), StudyDuration(1, 2, 3)) }
@@ -41,7 +41,7 @@ class StudyDurationTest {
         val c = d.copy(years = 5)
         assertEquals(5.toShort(), c.years)
         assertEquals(2.toShort(), c.months)
-        assertEquals(3.toShort(), c.days)
+        assertEquals(3, c.days)
     }
     @Test fun testCopyModifyMonths() {
         val d = StudyDuration(1, 2, 3)
@@ -52,7 +52,7 @@ class StudyDurationTest {
     @Test fun testCopyModifyDays() {
         val d = StudyDuration(1, 2, 3)
         val c = d.copy(days = 100)
-        assertEquals(100.toShort(), c.days)
+        assertEquals(100, c.days)
     }
     @Test fun testCopyUnmodified() {
         val d = StudyDuration(1, 2, 3)
@@ -73,18 +73,18 @@ class StudyDurationTest {
         val d = StudyDuration(0, 0, 0)
         assertEquals(0.toShort(), d.years)
         assertEquals(0.toShort(), d.months)
-        assertEquals(0.toShort(), d.days)
+        assertEquals(0, d.days)
     }
 
     @Test fun testMaxYearsAnnotated() { assertEquals(100.toShort(), StudyDuration(years = 100).years) }
     @Test fun testMaxMonthsAnnotated() { assertEquals(11.toShort(), StudyDuration(months = 11).months) }
-    @Test fun testMaxDaysAnnotated() { assertEquals(365.toShort(), StudyDuration(days = 365).days) }
+    @Test fun testMaxDaysAnnotated() { assertEquals(365, StudyDuration(days = 365).days) }
 
     @Test fun testDestructuring() {
         val (y, m, d) = StudyDuration(3, 6, 90)
         assertEquals(3.toShort(), y)
         assertEquals(6.toShort(), m)
-        assertEquals(90.toShort(), d)
+        assertEquals(90, d)
     }
 
     @Test fun testSelfEquality() {
