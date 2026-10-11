@@ -572,9 +572,7 @@ public interface StudyApi {
         @Header("X-Chronicle-Manifest-Digest") manifestDigest: String? = null,
         @Header("X-Chronicle-Enrollment-Attempt-Id") enrollmentAttemptId: String? = null,
         @Header("X-Chronicle-Proposed-Api-Key") proposedApiKey: String? = null,
-    ): EnrollmentResponse {
-        return enroll(studyId, participantId, sourceDeviceId, datasource)
-    }
+    ): EnrollmentResponse
 
     @Suppress("DEPRECATION")
     @POST(V4_BASE + STUDY_ID_PATH + PARTICIPANT_PATH + PARTICIPANT_ID_PATH + ANDROID_PATH)
@@ -583,9 +581,7 @@ public interface StudyApi {
         @Path(PARTICIPANT_ID) participantId: String,
         @Header("X-Chronicle-Device-Id") sourceDeviceId: String,
         @Body data: ChronicleData,
-    ): Int {
-        return uploadAndroidUsageEventData(studyId, participantId, sourceDeviceId, data)
-    }
+    ): Int
 
     @Suppress("DEPRECATION")
     @POST(V4_BASE + STUDY_ID_PATH + PARTICIPANT_PATH + PARTICIPANT_ID_PATH + ANDROID_PATH + SENSORS_PATH)
@@ -594,9 +590,7 @@ public interface StudyApi {
         @Path(PARTICIPANT_ID) participantId: String,
         @Header("X-Chronicle-Device-Id") sourceDeviceId: String,
         @Body data: List<AndroidSensorSample>,
-    ): Int {
-        return uploadAndroidSensorData(studyId, participantId, sourceDeviceId, data)
-    }
+    ): Int
 
     @Suppress("DEPRECATION")
     @POST(V4_BASE + STUDY_ID_PATH + PARTICIPANT_PATH + PARTICIPANT_ID_PATH + ANDROID_PATH + BATTERY_PATH)
@@ -605,9 +599,7 @@ public interface StudyApi {
         @Path(PARTICIPANT_ID) participantId: String,
         @Header("X-Chronicle-Device-Id") sourceDeviceId: String,
         @Body data: List<BatterySample>,
-    ): Int {
-        return uploadBatteryTelemetry(studyId, participantId, sourceDeviceId, data)
-    }
+    ): Int
 
     @Suppress("DEPRECATION")
     @POST(V4_BASE + STUDY_ID_PATH + PARTICIPANT_PATH + PARTICIPANT_ID_PATH + ANDROID_PATH + INTERACTION_PATH)
@@ -616,9 +608,7 @@ public interface StudyApi {
         @Path(PARTICIPANT_ID) participantId: String,
         @Header("X-Chronicle-Device-Id") sourceDeviceId: String,
         @Body data: List<AndroidInteractionEvent>,
-    ): Int {
-        return uploadInteractionEvents(studyId, participantId, sourceDeviceId, data)
-    }
+    ): Int
 
     @Suppress("DEPRECATION")
     @POST(V4_BASE + STUDY_ID_PATH + PARTICIPANT_PATH + PARTICIPANT_ID_PATH + IOS_PATH)
