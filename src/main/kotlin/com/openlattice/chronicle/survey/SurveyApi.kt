@@ -1,10 +1,12 @@
 package com.openlattice.chronicle.survey
 
 import com.openlattice.chronicle.base.OK
+import com.openlattice.chronicle.EditRevisionApi
 import com.openlattice.chronicle.data.FileType
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.HTTP
 import retrofit2.http.PATCH
 import retrofit2.http.POST
@@ -103,6 +105,7 @@ public interface SurveyApi {
     public fun setAppsFilteredForStudyAppUsageSurvey(
         @Path(STUDY_ID) studyId: UUID,
         @Body appPackages: Set<String>,
+        @retrofit2.http.Header("If-Match") ifMatch: String? = null,
     ): OK
 
     /**
@@ -214,6 +217,7 @@ public interface SurveyApi {
         @Path(STUDY_ID) studyId: UUID,
         @Path(QUESTIONNAIRE_ID) questionnaireId: UUID,
         @Body update: QuestionnaireUpdate,
+        @Header(EditRevisionApi.IF_MATCH) revision: String,
     ): OK
 
     /**

@@ -1,9 +1,11 @@
 package com.openlattice.chronicle.study
 
+import com.openlattice.chronicle.EditRevisionApi
 import com.openlattice.chronicle.base.OK
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -25,16 +27,23 @@ public interface StudyLifecycleApi {
     }
 
     /**
-     * Archives a study. Archived studies are read-only for non-admin users.
+     * Archives a study. Archived studies are read-only for non-admin users. [revision] is the study ETag as
+     * read; missing is 428, stale is 412.
      */
     @POST(BASE + StudyApi.STUDY_ID_PATH + ARCHIVE_PATH)
-    public fun archiveStudy(@Path(StudyApi.STUDY_ID) studyId: UUID): OK
+    public fun archiveStudy(
+        @Path(StudyApi.STUDY_ID) studyId: UUID,
+        @Header(EditRevisionApi.IF_MATCH) revision: String?,
+    ): OK
 
     /**
      * Restores an archived study to active status.
      */
     @POST(BASE + StudyApi.STUDY_ID_PATH + UNARCHIVE_PATH)
-    public fun unarchiveStudy(@Path(StudyApi.STUDY_ID) studyId: UUID): OK
+    public fun unarchiveStudy(
+        @Path(StudyApi.STUDY_ID) studyId: UUID,
+        @Header(EditRevisionApi.IF_MATCH) revision: String?,
+    ): OK
 
     /**
      * Clones a study, optionally including participants and settings.

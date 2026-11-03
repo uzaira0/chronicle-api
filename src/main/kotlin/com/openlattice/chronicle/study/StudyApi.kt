@@ -1,6 +1,7 @@
 package com.openlattice.chronicle.study
 
 import com.openlattice.chronicle.generated.ChronicleHeaders
+import com.openlattice.chronicle.EditRevisionApi
 
 import com.openlattice.chronicle.android.AndroidDeviceSensorAvailability
 import com.openlattice.chronicle.collection.CollectionUploadEvidence
@@ -348,12 +349,14 @@ public interface StudyApi {
      * @param studyId studyId
      * @param participantId participantId
      * @param participationStatus new status value
+     * @param revision `"<statusRevision>"` of the participant as read; missing is 428, stale is 412
      */
     @PATCH(BASE + STUDY_ID_PATH + PARTICIPANT_PATH + PARTICIPANT_ID_PATH + STATUS_PATH)
     public fun updateParticipationStatus(
         @Path(STUDY_ID) studyId: UUID,
         @Path(PARTICIPANT_ID) participantId: String,
         @Query(PARTICIPATION_STATUS) participationStatus: ParticipationStatus,
+        @Header(EditRevisionApi.IF_MATCH) revision: String?,
     ): OK
 
     /**
@@ -361,13 +364,14 @@ public interface StudyApi {
      *
      * @param studyId The id of the study.
      * @param participantId The id of the participant.
-     * @param annotations A map containing "participantNotes" (String) and/or "participantTags" (List<String>).
+     * @param annotations Omitted fields are unchanged; null clears a field.
      */
     @PATCH(BASE + STUDY_ID_PATH + PARTICIPANT_PATH + PARTICIPANT_ID_PATH + ANNOTATIONS_PATH)
     public fun updateParticipantAnnotations(
         @Path(STUDY_ID) studyId: UUID,
         @Path(PARTICIPANT_ID) participantId: String,
-        @Body annotations: Map<String, @JvmSuppressWildcards Any?>,
+        @Body annotations: ParticipantAnnotationsUpdate,
+        @Header(EditRevisionApi.IF_MATCH) revision: String,
     ): OK
 
     /**
