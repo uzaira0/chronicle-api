@@ -1,9 +1,10 @@
 package com.openlattice.chronicle.study
 
+import com.openlattice.chronicle.generated.ChronicleHeaders
 
 import com.openlattice.chronicle.android.AndroidDeviceSensorAvailability
 import com.openlattice.chronicle.collection.CollectionUploadEvidence
-import com.openlattice.chronicle.android.SensorUploadReceipt
+import com.openlattice.chronicle.android.UploadReceipt
 import com.openlattice.chronicle.android.AndroidSensorSample
 import com.openlattice.chronicle.android.ChronicleData
 import com.openlattice.chronicle.base.OK
@@ -85,6 +86,29 @@ public interface StudyApi {
         public const val UPLOAD_STATUS_PATH: String = "/upload-status"
         public const val DIAGNOSTICS_PATH: String = "/diagnostics"
 
+        public const val AUDIO_ACTIVITY_PATH: String = "/audio-activity"
+        public const val AUDIO_CONTENT_PATH: String = "/audio-content"
+        public const val NOTIFICATION_ACTIVITY_PATH: String = "/notification-activity"
+        public const val SLEEP_PATH: String = "/sleep"
+        public const val ACTIVITY_RECOGNITION_PATH: String = "/activity-recognition"
+        public const val HEALTH_CONNECT_PATH: String = "/health-connect"
+        public const val CONNECTIVITY_STATE_PATH: String = "/connectivity-state"
+        public const val APP_NETWORK_USAGE_PATH: String = "/app-network-usage"
+        public const val DEVICE_SETTINGS_PATH: String = "/device-settings"
+        public const val UPLOAD_DIAGNOSTICS_PATH: String = "/upload-diagnostics"
+        public const val SCREEN_TIME_PATH: String = "/screen-time"
+
+        /** Static platform resources shared by routing and privacy-safe path shaping. */
+        public val PLATFORM_DATA_PATHS: Set<String> = setOf(
+            AVAILABILITY_PATH, DATA_PATH, SENSORS_PATH,
+            STATUS_PATH, UPLOAD_PATH, RECEIPT_PATH,
+            COLLECTION_ACK_PATH, BATTERY_PATH, INTERACTION_PATH,
+            AUDIO_ACTIVITY_PATH, AUDIO_CONTENT_PATH,
+            NOTIFICATION_ACTIVITY_PATH, SLEEP_PATH, ACTIVITY_RECOGNITION_PATH,
+            HEALTH_CONNECT_PATH, CONNECTIVITY_STATE_PATH, APP_NETWORK_USAGE_PATH,
+            DEVICE_SETTINGS_PATH, UPLOAD_DIAGNOSTICS_PATH,
+            SCREEN_TIME_PATH,
+        )
     }
 
     /**
@@ -291,7 +315,7 @@ public interface StudyApi {
     public fun getAndroidDiagnostics(
         @Path(STUDY_ID) studyId: UUID,
         @Query("participantId") participantId: String? = null,
-        @Query("deviceId") deviceId: UUID? = null,
+        @Query("randomDeviceId") randomDeviceId: UUID? = null,
         @Query("from") fromDay: LocalDate? = null,
         @Query("to") toDay: LocalDate? = null,
         @Query("moduleFamily") moduleFamily: String? = null,
@@ -384,7 +408,7 @@ public interface StudyApi {
     public fun getEnrollmentPreviewV4(
         @Path(STUDY_ID) studyId: UUID,
         @Path(PARTICIPANT_ID) participantId: String,
-        @Header("X-Chronicle-Enrollment-Code") enrollmentCode: String,
+        @Header(ChronicleHeaders.ENROLLMENT_CODE_HEADER) enrollmentCode: String,
     ): EnrollmentPreviewResponse
 
     // Every parameter is a separately authenticated part of the stable enrollment wire contract.
@@ -393,27 +417,29 @@ public interface StudyApi {
     public fun enrollV4(
         @Path(STUDY_ID) studyId: UUID,
         @Path(PARTICIPANT_ID) participantId: String,
-        @Header("X-Chronicle-Device-Id") sourceDeviceId: String,
+        @Header(ChronicleHeaders.RANDOM_DEVICE_ID_HEADER) sourceRandomDeviceId: String,
         @Body datasource: SourceDevice,
-        @Header("X-Chronicle-Enrollment-Code") enrollmentCode: String? = null,
-        @Header("X-Chronicle-Manifest-Digest") manifestDigest: String? = null,
-        @Header("X-Chronicle-Enrollment-Attempt-Id") enrollmentAttemptId: String? = null,
-        @Header("X-Chronicle-Proposed-Api-Key") proposedApiKey: String? = null,
+        @Header(ChronicleHeaders.ENROLLMENT_CODE_HEADER) enrollmentCode: String? = null,
+        @Header(ChronicleHeaders.MANIFEST_DIGEST_HEADER) manifestDigest: String? = null,
+        @Header(ChronicleHeaders.ENROLLMENT_ATTEMPT_ID_HEADER) enrollmentAttemptId: String? = null,
+        @Header(ChronicleHeaders.PROPOSED_API_KEY_HEADER) proposedApiKey: String? = null,
     ): EnrollmentResponse
 
     @POST(V4_BASE + STUDY_ID_PATH + PARTICIPANT_PATH + PARTICIPANT_ID_PATH + ANDROID_PATH)
     public fun uploadAndroidUsageEventDataV4(
         @Path(STUDY_ID) studyId: UUID,
         @Path(PARTICIPANT_ID) participantId: String,
-        @Header("X-Chronicle-Device-Id") sourceDeviceId: String,
+        @Header(ChronicleHeaders.RANDOM_DEVICE_ID_HEADER) sourceRandomDeviceId: String,
         @Body data: ChronicleData,
-    ): Int
+        @Header(CollectionUploadEvidence.SETTINGS_VERSION_HEADER) settingsVersion: Int? = null,
+        @Header(CollectionUploadEvidence.DECISION_SEQ_HEADER) decisionSeq: Long? = null,
+    ): UploadReceipt
 
     @POST(V4_BASE + STUDY_ID_PATH + PARTICIPANT_PATH + PARTICIPANT_ID_PATH + ANDROID_PATH + SENSORS_PATH)
     public fun uploadAndroidSensorDataV4(
         @Path(STUDY_ID) studyId: UUID,
         @Path(PARTICIPANT_ID) participantId: String,
-        @Header("X-Chronicle-Device-Id") sourceDeviceId: String,
+        @Header(ChronicleHeaders.RANDOM_DEVICE_ID_HEADER) sourceRandomDeviceId: String,
         @Body data: List<AndroidSensorSample>,
     ): Int
 
@@ -421,24 +447,27 @@ public interface StudyApi {
     public fun uploadAndroidSensorDataReceiptV4(
         @Path(STUDY_ID) studyId: UUID,
         @Path(PARTICIPANT_ID) participantId: String,
-        @Header("X-Chronicle-Device-Id") sourceDeviceId: String,
+        @Header(ChronicleHeaders.RANDOM_DEVICE_ID_HEADER) sourceRandomDeviceId: String,
         @Body data: List<AndroidSensorSample>,
         @Header(CollectionUploadEvidence.SETTINGS_VERSION_HEADER) settingsVersion: Int? = null,
-    ): SensorUploadReceipt
+        @Header(CollectionUploadEvidence.DECISION_SEQ_HEADER) decisionSeq: Long? = null,
+    ): UploadReceipt
 
     @POST(V4_BASE + STUDY_ID_PATH + PARTICIPANT_PATH + PARTICIPANT_ID_PATH + ANDROID_PATH + BATTERY_PATH)
     public fun uploadBatteryTelemetryV4(
         @Path(STUDY_ID) studyId: UUID,
         @Path(PARTICIPANT_ID) participantId: String,
-        @Header("X-Chronicle-Device-Id") sourceDeviceId: String,
+        @Header(ChronicleHeaders.RANDOM_DEVICE_ID_HEADER) sourceRandomDeviceId: String,
         @Body data: List<BatterySample>,
-    ): Int
+        @Header(CollectionUploadEvidence.SETTINGS_VERSION_HEADER) settingsVersion: Int? = null,
+        @Header(CollectionUploadEvidence.DECISION_SEQ_HEADER) decisionSeq: Long? = null,
+    ): UploadReceipt
 
     @POST(V4_BASE + STUDY_ID_PATH + PARTICIPANT_PATH + PARTICIPANT_ID_PATH + ANDROID_PATH + INTERACTION_PATH)
     public fun uploadInteractionEventsV4(
         @Path(STUDY_ID) studyId: UUID,
         @Path(PARTICIPANT_ID) participantId: String,
-        @Header("X-Chronicle-Device-Id") sourceDeviceId: String,
+        @Header(ChronicleHeaders.RANDOM_DEVICE_ID_HEADER) sourceRandomDeviceId: String,
         @Body data: List<AndroidInteractionEvent>,
     ): Int
 
@@ -449,21 +478,21 @@ public interface StudyApi {
      * stays in `PENDING_ACK` (not collecting) until the participant acknowledges it
      * on-device, at which point the app calls this endpoint.
      *
-     * This is a new endpoint with no v3 counterpart. Auth (`X-Api-Key`) and device id
-     * (`X-Chronicle-Device-Id`) ride the standard v4 android headers. The server
+     * This endpoint has no v3 counterpart. Auth (`X-Api-Key`) and random device id
+     * (`X-Chronicle-Random-Device-Id`) ride the standard v4 android headers. The server
      * stamps its own authoritative receipt time when persisting; the body's
      * [CollectionAcknowledgment.acknowledgedAt] is advisory only.
      *
      * @param studyId The id of the study.
      * @param participantId The id of the participant.
-     * @param sourceDeviceId The device id (via header).
+     * @param sourceRandomDeviceId The random device id (via header).
      * @param acknowledgment The modules being acknowledged plus device metadata.
      */
     @POST(V4_BASE + STUDY_ID_PATH + PARTICIPANT_PATH + PARTICIPANT_ID_PATH + ANDROID_PATH + COLLECTION_ACK_PATH)
     public fun reportCollectionAcknowledgmentV4(
         @Path(STUDY_ID) studyId: UUID,
         @Path(PARTICIPANT_ID) participantId: String,
-        @Header("X-Chronicle-Device-Id") sourceDeviceId: String,
+        @Header(ChronicleHeaders.RANDOM_DEVICE_ID_HEADER) sourceRandomDeviceId: String,
         @Body acknowledgment: CollectionAcknowledgment,
     ): OK
 }

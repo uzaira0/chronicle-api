@@ -1,5 +1,6 @@
 package com.openlattice.chronicle.util
 
+import com.openlattice.chronicle.generated.ChronicleHeaders
 import com.openlattice.chronicle.apikey.ApiKeyApi
 import com.openlattice.chronicle.study.StudyApi
 import com.openlattice.chronicle.survey.SurveyApi
@@ -36,9 +37,9 @@ public class ResearcherCreateIntent(public val key: String = UUID.randomUUID().t
             if (binding != null && binding != current) throw IOException("Create intent cannot retry a changed route or body")
             binding = current
         }
-        val explicit = request.header("Idempotency-Key")
+        val explicit = request.header(ChronicleHeaders.IDEMPOTENCY_KEY_HEADER)
         if (explicit != null && explicit != key) throw IOException("Create intent key does not match request")
-        return chain.proceed(request.newBuilder().header("Idempotency-Key", key).build())
+        return chain.proceed(request.newBuilder().header(ChronicleHeaders.IDEMPOTENCY_KEY_HEADER, key).build())
     }
 }
 

@@ -7,7 +7,7 @@ import com.openlattice.chronicle.ChronicleTestUtils.readBody
 import com.openlattice.chronicle.android.ChronicleData
 import com.openlattice.chronicle.android.AndroidSensorSample
 import com.openlattice.chronicle.android.AndroidSensorType
-import com.openlattice.chronicle.android.SensorUploadReceipt
+import com.openlattice.chronicle.android.UploadReceipt
 import com.openlattice.chronicle.collection.CollectionUploadEvidence
 import com.openlattice.chronicle.study.StudyApi
 import com.openlattice.chronicle.util.RetrofitBuilders.mapper
@@ -30,11 +30,11 @@ class AndroidCoreApiContractTest {
     fun `sensor receipts transmit capture evidence and decode all row dispositions`() {
         val study = UUID.randomUUID()
         val samples = List(3) { AndroidSensorSample(UUID.randomUUID(), AndroidSensorType.accelerometer, OffsetDateTime.now(), "UTC") }
-        val expected = SensorUploadReceipt(setOf(samples[0].id), setOf(samples[1].id), setOf(samples[2].id), 2)
+        val expected = UploadReceipt(setOf(samples[0].id), setOf(samples[1].id, samples[2].id), 2)
         val api = createRetrofitAdapter(createHttpClient({ chain ->
             val request = chain.request()
             assertEquals("/chronicle/v4/study/$study/participant/participant/android/sensors/receipt", request.url.encodedPath)
-            assertEquals("device", request.header("X-Chronicle-Device-Id"))
+            assertEquals("device", request.header("X-Chronicle-Random-Device-Id"))
             assertEquals("1", request.header(CollectionUploadEvidence.SETTINGS_VERSION_HEADER))
             assertEquals(mapper.writeValueAsString(samples), readBody(request.body).toString(Charsets.UTF_8))
             Response.Builder().request(request).protocol(Protocol.HTTP_1_1).code(200).message("OK")
@@ -48,42 +48,45 @@ class AndroidCoreApiContractTest {
             .substringBefore("\n  /chronicle/")
         assertTrue(operation.contains("operationId: uploadAndroidSensorDataReceiptV4"))
         assertTrue(operation.contains("#/components/parameters/collectionVersionHeader"))
-        assertTrue(operation.contains("#/components/schemas/SensorUploadReceipt"))
+        assertTrue(operation.contains("#/components/schemas/UploadReceipt"))
     }
 
     @Test
     fun `v4 Android uploads send the device header on the v4 wire route`() {
         val studyId = UUID.randomUUID()
         val participantId = "participant"
-        val deviceId = "device-instance"
+        val randomDeviceId = "device-instance"
         val usageData = ChronicleData(emptyList())
         val emptyBatch = mapper.writeValueAsString(emptyList<Any>())
         val uploads = listOf(
             Triple("", mapper.writeValueAsString(usageData), { api: StudyApi ->
-                api.uploadAndroidUsageEventDataV4(studyId, participantId, deviceId, usageData)
+                api.uploadAndroidUsageEventDataV4(studyId, participantId, randomDeviceId, usageData)
             }),
             Triple("/sensors", emptyBatch, { api: StudyApi ->
-                api.uploadAndroidSensorDataV4(studyId, participantId, deviceId, emptyList())
+                api.uploadAndroidSensorDataV4(studyId, participantId, randomDeviceId, emptyList())
             }),
             Triple("/battery", emptyBatch, { api: StudyApi ->
-                api.uploadBatteryTelemetryV4(studyId, participantId, deviceId, emptyList())
+                api.uploadBatteryTelemetryV4(studyId, participantId, randomDeviceId, emptyList())
             }),
             Triple("/interaction", emptyBatch, { api: StudyApi ->
-                api.uploadInteractionEventsV4(studyId, participantId, deviceId, emptyList())
+                api.uploadInteractionEventsV4(studyId, participantId, randomDeviceId, emptyList())
             }),
         )
+        val receipt = UploadReceipt(emptySet(), emptySet(), 0)
         uploads.forEach { (suffix, body, upload) ->
+            // Usage and battery uploads answer with a per-row receipt; the other routes still return a count.
+            val response: Any = if (suffix.isEmpty() || suffix == "/battery") receipt else 0
             val api = createRetrofitAdapter(createHttpClient({ chain ->
                 val request = chain.request()
                 assertEquals("POST", request.method)
                 assertEquals("/chronicle/v4/study/$studyId/participant/$participantId/android$suffix", request.url.encodedPath)
-                assertEquals(deviceId, request.header("X-Chronicle-Device-Id"))
+                assertEquals(randomDeviceId, request.header("X-Chronicle-Random-Device-Id"))
                 assertEquals(body, readBody(request.body).toString(Charsets.UTF_8))
                 Response.Builder().request(request).protocol(Protocol.HTTP_1_1).code(200).message("OK")
                     .header("Content-Type", JSON_MIME_TYPE)
-                    .body("0".toResponseBody(JSON_MIME_TYPE.toMediaType())).build()
+                    .body(mapper.writeValueAsString(response).toResponseBody(JSON_MIME_TYPE.toMediaType())).build()
             })).create(StudyApi::class.java)
-            assertEquals(0, upload(api))
+            assertEquals(response, upload(api))
         }
     }
 
@@ -101,7 +104,7 @@ class AndroidCoreApiContractTest {
                 .substringBefore("\n  /chronicle/")
 
             assertTrue(operation.contains("operationId: $operationId"))
-            assertTrue(operation.contains("#/components/parameters/chronicleDeviceIdHeader"))
+            assertTrue(operation.contains("#/components/parameters/chronicleRandomDeviceIdHeader"))
             assertTrue(operation.contains("#/components/parameters/mobileApiKeyHeader"))
         }
     }
@@ -131,7 +134,7 @@ class AndroidCoreApiContractTest {
 
         assertTrue(acknowledgmentSchema.contains("unavailableModules:"))
         assertTrue(acknowledgmentSchema.contains("Non-sensor modules are invalid here"))
-        assertTrue(acknowledgmentOperation.contains("#/components/parameters/chronicleDeviceIdHeader"))
+        assertTrue(acknowledgmentOperation.contains("#/components/parameters/chronicleRandomDeviceIdHeader"))
         assertTrue(acknowledgmentOperation.contains("#/components/parameters/mobileApiKeyHeader"))
     }
 }

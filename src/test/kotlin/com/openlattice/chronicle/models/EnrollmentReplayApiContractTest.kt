@@ -32,7 +32,7 @@ class EnrollmentReplayApiContractTest {
         val proposedApiKey = "ck_testprefix_testcredential"
         val expected = EnrollmentResponse(UUID.randomUUID(), apiKey = proposedApiKey)
         val headers = mapOf(
-            "X-Chronicle-Device-Id" to device.deviceId,
+            "X-Chronicle-Random-Device-Id" to device.randomDeviceId,
             "X-Chronicle-Enrollment-Code" to enrollmentCode,
             "X-Chronicle-Manifest-Digest" to manifestDigest,
             "X-Chronicle-Enrollment-Attempt-Id" to attemptId,
@@ -50,7 +50,7 @@ class EnrollmentReplayApiContractTest {
         })).create(StudyApi::class.java)
 
         assertEquals(expected, api.enrollV4(
-            studyId, participantId, device.deviceId, device,
+            studyId, participantId, device.randomDeviceId, device,
             enrollmentCode, manifestDigest, attemptId, proposedApiKey,
         ))
     }

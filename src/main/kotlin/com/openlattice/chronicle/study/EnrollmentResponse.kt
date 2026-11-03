@@ -12,7 +12,7 @@ import java.util.UUID
  *
  * On servers that don't issue per-device keys (the legacy upstream backup
  * server), [apiKey] is null and the client falls back to the legacy
- * `X-Chronicle-Device-Id` header for uploads.
+ * `X-Chronicle-Random-Device-Id` header for uploads.
  *
  * The client deserializer accepts either this object shape or a bare UUID
  * string (legacy v3/v4 response) for protocol compatibility.
