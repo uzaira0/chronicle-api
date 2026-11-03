@@ -1,6 +1,5 @@
 package com.openlattice.chronicle.models
 
-import com.openlattice.chronicle.survey.AppUsage
 import com.openlattice.chronicle.survey.Question
 import com.openlattice.chronicle.survey.Questionnaire
 import com.openlattice.chronicle.survey.QuestionnaireResponse
@@ -9,7 +8,6 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.OffsetDateTime
-import java.util.Optional
 import java.util.UUID
 
 /**
@@ -86,44 +84,5 @@ class SurveyModelsTest {
         // value is @NotNull but an empty set is permitted at the model level (a skipped answer).
         val response = QuestionnaireResponse("How are you?", emptySet())
         assertTrue(response.value.isEmpty())
-    }
-
-    // ===== AppUsage label-defaulting =====
-    @Test fun appUsageBlankLabelFallsBackToPackageName() {
-        val usage = AppUsage(
-            appPackageName = "com.example.app",
-            appLabel = "   ",
-            timestamp = OffsetDateTime.now(),
-            eventType = 1,
-            users = listOf("Me"),
-            timezone = "America/Chicago",
-            uploadedAt = Optional.empty(),
-        )
-        assertEquals("com.example.app", usage.appLabel)
-    }
-
-    @Test fun appUsagePreservesNonBlankLabel() {
-        val usage = AppUsage(
-            appPackageName = "com.example.app",
-            appLabel = "Example",
-            timestamp = OffsetDateTime.now(),
-            eventType = 1,
-            users = emptyList(),
-            timezone = "UTC",
-            uploadedAt = Optional.empty(),
-        )
-        assertEquals("Example", usage.appLabel)
-    }
-
-    @Test fun appUsageDefaultsUsersToEmpty() {
-        val usage = AppUsage(
-            appPackageName = "com.example.app",
-            appLabel = "Example",
-            timestamp = OffsetDateTime.now(),
-            eventType = 1,
-            timezone = "UTC",
-            uploadedAt = Optional.empty(),
-        )
-        assertTrue(usage.users.isEmpty())
     }
 }

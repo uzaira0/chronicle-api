@@ -13,6 +13,7 @@ import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.*
 
@@ -41,6 +42,7 @@ public interface SurveyApi {
 
         public const val PARTICIPANT_PATH: String = "/participant"
         public const val APP_USAGE_PATH: String = "/app-usage"
+        public const val APP_USAGE_DAYS_PATH: String = "/app-usage/days"
         public const val APP_USAGE_FREQUENCY_PATH: String = "/app-usage-frequency"
         public const val DEVICE_USAGE_PATH: String = "/device-usage"
         public const val QUESTIONNAIRE_PATH: String = "/questionnaire"
@@ -135,38 +137,45 @@ public interface SurveyApi {
     ): OK
 
     /**
-     * Queries the chronicle_usage_events table for usage events matching given studyId, participantId and date
+     * Lists the participant's ended survey days in the study time zone with their answer state.
      *
      * @param studyId the studyId
      * @param participantId the participant
-     * @param startDateTime lower bound date (inclusive)
-     * @param endDateTime upper bound date (exclusive)
-     * @return a list of AppUsage objects where each object encapsulates
-     * an app used at a specific timestamp in a specific timezone
+     */
+    @GET(BASE + STUDY_ID_PATH + PARTICIPANT_PATH + PARTICIPANT_ID_PATH + APP_USAGE_DAYS_PATH)
+    public fun getAppUsageSurveyDays(
+        @Path(STUDY_ID) studyId: UUID,
+        @Path(PARTICIPANT_ID) participantId: String,
+    ): AppUsageSurveyDays
+
+    /**
+     * Returns one ended survey day: each app used for at least the study threshold, with its blocks and answers.
+     *
+     * @param studyId the studyId
+     * @param participantId the participant
+     * @param date the survey day in the study time zone
      */
     @GET(BASE + STUDY_ID_PATH + PARTICIPANT_PATH + PARTICIPANT_ID_PATH + APP_USAGE_PATH)
     public fun getAppUsageSurveyData(
         @Path(STUDY_ID) studyId: UUID,
         @Path(PARTICIPANT_ID) participantId: String,
-        @Query(START_DATE) startDateTime: OffsetDateTime,
-        @Query(END_DATE) endDateTime: OffsetDateTime,
-        @Query(THRESHOLD) thresholdInSeconds: Int? = null,
-    ): List<AppUsage>
+        @Query(DATE) date: LocalDate,
+    ): AppUsageDaySurvey
 
     /**
-     * Submit app usage survey responses for the specified participantId
-     * Note that each instance of AppUsage(appPackageName, appLabel, timestamp) is considered a unique entity
-     * and will not be overwritten if it already exists in storage
+     * Stores answers for unanswered blocks of one ended survey day. An empty list confirms a day with no apps.
      *
      * @param studyId studyId
      * @param participantId participantId
-     * @param surveyResponses a list of AppUsage Objects
+     * @param date the survey day in the study time zone
+     * @param answers who used each app in each answered block
      */
     @POST(BASE + STUDY_ID_PATH + PARTICIPANT_PATH + PARTICIPANT_ID_PATH + APP_USAGE_PATH)
     public fun submitAppUsageSurvey(
         @Path(STUDY_ID) studyId: UUID,
         @Path(PARTICIPANT_ID) participantId: String,
-        @Body surveyResponses: List<AppUsage>,
+        @Query(DATE) date: LocalDate,
+        @Body answers: List<AppUsageAnswer>,
     )
 
     /**
