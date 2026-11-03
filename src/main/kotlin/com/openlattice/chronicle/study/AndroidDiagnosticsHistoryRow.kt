@@ -9,5 +9,4 @@ public data class AndroidDiagnosticsHistoryRow(
     val deviceId: UUID?,
     val day: LocalDate,
     val codes: List<AndroidDiagnosticCodeSummary> = emptyList(),
-    val dataQualityAlert: DataQualityAlertHistoryItem? = null,
 )

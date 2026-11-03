@@ -45,15 +45,14 @@ class ResearcherCreateIntentTest {
         assertEquals(2, requests.size)
     }
 
-    @Test fun addsIntentOnlyToTheFourResearcherCreateRoutes() {
+    @Test fun addsIntentOnlyToTheThreeResearcherCreateRoutes() {
         val studyId = UUID.randomUUID()
         val routes = listOf(
             "/chronicle/v3/study",
             "/chronicle/v3/study/$studyId/api-keys",
-            "/chronicle/v3/study/$studyId/export/async",
             "/chronicle/v3/survey/$studyId/questionnaire",
         )
-        for (route in routes + "/chronicle/v3/study/$studyId/participant") {
+        for (route in routes + "/chronicle/v3/study/$studyId/participant" + "/chronicle/v3/study/$studyId/participants/data") {
             val intent = ResearcherCreateIntent("route-intent")
             var observedKey: String? = null
             val client = researcherClient(intent) { chain ->

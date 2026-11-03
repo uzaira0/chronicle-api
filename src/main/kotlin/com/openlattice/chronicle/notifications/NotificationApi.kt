@@ -2,9 +2,7 @@ package com.openlattice.chronicle.notifications
 
 import com.openlattice.chronicle.base.OK
 import retrofit2.http.Body
-import retrofit2.http.GET
 import retrofit2.http.POST
-import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.Query
 import java.util.*
@@ -49,62 +47,22 @@ public interface NotificationApi {
      * @param principalId The principal for which to the phone number.
      * @return The principals currently configured phone numbers.
      */
-    @GET(BASE + STUDY_ID_PATH + PRINCIPAL_ID_PATH + PHONE_NUMBERS_PATH)
-    public fun getResearcherPhoneNumber(
-        @Path(STUDY_ID) studyId: UUID,
-        @Path(PRINCIPAL_ID) principalId: String,
-    ): String
+    
 
 
-    @PUT(BASE + STUDY_ID_PATH + PRINCIPAL_ID_PATH + PHONE_NUMBER_PATH)
-    public fun setResearcherPhoneNumber(
-        @Path(STUDY_ID) studyId: UUID,
-        @Path(PRINCIPAL_ID) principalId: String,
-        @Path(PHONE_NUMBER) phoneNumber: String,
-    )
+    
 
-    @POST(BASE + STUDY_ID_PATH + PRINCIPAL_ID_PATH + PHONE_NUMBER_PATH + VERIFICATION_PATH)
-    public fun verifyResearcherPhoneNumber(
-        @Path(STUDY_ID) studyId: UUID,
-        @Path(PRINCIPAL_ID) principalId: String,
-        @Path(PHONE_NUMBER) phoneNumber: String,
-        @Body confirmationCode: String,
-    )
+    
 
-    @GET(BASE + STUDY_ID_PATH + PRINCIPAL_ID_PATH + PHONE_NUMBER_PATH + VERIFICATION_PATH)
-    public fun isResearcherPhoneNumberVerified(
-        @Path(STUDY_ID) studyId: UUID,
-        @Path(PRINCIPAL_ID) principalId: String,
-        @Path(PHONE_NUMBER) phoneNumber: String,
-    ): Boolean
+    
 
-    @GET(BASE + STUDY_ID_PATH + PRINCIPAL_ID_PATH + NOTIFICATIONS_PATH)
-    public fun getResearcherNotificationSettings(
-        @Path(STUDY_ID) studyId: UUID,
-        @Path(PRINCIPAL_ID) principalId: String,
-    ): Map<NotificationType, Set<DeliveryType>>
+    
 
-    @PUT(BASE + STUDY_ID_PATH + PRINCIPAL_ID_PATH + NOTIFICATIONS_PATH)
-    public fun setResearcherNotificationSettings(
-        @Path(STUDY_ID) studyId: UUID,
-        @Path(PRINCIPAL_ID) principalId: String,
-        @Body settings: Map<NotificationType, Set<DeliveryType>>,
-    ): OK
+    
 
-    @GET(BASE + STUDY_ID_PATH + PRINCIPAL_ID_PATH + NOTIFICATION_TYPE_PATH)
-    public fun getResearcherNotificationSetting(
-        @Path(STUDY_ID) studyId: UUID,
-        @Path(PRINCIPAL_ID) principalId: String,
-        @Path(NOTIFICATION_TYPE) notificationType: NotificationType,
-    ): Set<DeliveryType>
+    
 
-    @PUT(BASE + STUDY_ID_PATH + PRINCIPAL_ID_PATH + NOTIFICATION_TYPE_PATH)
-    public fun setResearcherNotificationSettings(
-        @Path(STUDY_ID) studyId: UUID,
-        @Path(PRINCIPAL_ID) principalId: String,
-        @Path(NOTIFICATION_TYPE) notificationType: NotificationType,
-        @Body deliveryTypes: Set<DeliveryType>,
-    ): OK
+    
 
     /**
      * Send Message to participant.

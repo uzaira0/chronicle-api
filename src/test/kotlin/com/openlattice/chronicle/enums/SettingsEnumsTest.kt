@@ -24,16 +24,14 @@ class SettingsEnumsTest {
         } catch (expected: IllegalArgumentException) { /* expected */ }
     }
 
-    // ===== WebhookEventType (4 values) =====
-    @Test fun testWebhookEventTypeCount() { assertEquals(4, WebhookEventType.values().size) }
+    // ===== WebhookEventType (3 values) =====
+    @Test fun testWebhookEventTypeCount() { assertEquals(3, WebhookEventType.values().size) }
     @Test fun testWebhookEventTypeParticipantEnrolled() { assertEquals("PARTICIPANT_ENROLLED", WebhookEventType.PARTICIPANT_ENROLLED.name) }
     @Test fun testWebhookEventTypeDataSubmitted() { assertEquals("DATA_SUBMITTED", WebhookEventType.DATA_SUBMITTED.name) }
     @Test fun testWebhookEventTypeStudyStatusChanged() { assertEquals("STUDY_STATUS_CHANGED", WebhookEventType.STUDY_STATUS_CHANGED.name) }
-    @Test fun testWebhookEventTypeExportCompleted() { assertEquals("EXPORT_COMPLETED", WebhookEventType.EXPORT_COMPLETED.name) }
     @Test fun testWebhookEventTypeOrdinalParticipantEnrolled() { assertEquals(0, WebhookEventType.PARTICIPANT_ENROLLED.ordinal) }
     @Test fun testWebhookEventTypeOrdinalDataSubmitted() { assertEquals(1, WebhookEventType.DATA_SUBMITTED.ordinal) }
     @Test fun testWebhookEventTypeOrdinalStudyStatusChanged() { assertEquals(2, WebhookEventType.STUDY_STATUS_CHANGED.ordinal) }
-    @Test fun testWebhookEventTypeOrdinalExportCompleted() { assertEquals(3, WebhookEventType.EXPORT_COMPLETED.ordinal) }
     @Test fun testWebhookEventTypeValueOfDataSubmitted() { assertEquals(WebhookEventType.DATA_SUBMITTED, WebhookEventType.valueOf("DATA_SUBMITTED")) }
     @Test fun testWebhookEventTypeValueOfInvalid() {
         try {

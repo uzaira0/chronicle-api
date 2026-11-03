@@ -7,7 +7,6 @@ import com.openlattice.chronicle.authorization.Permission
 import com.openlattice.chronicle.authorization.Principal
 import com.openlattice.chronicle.authorization.PrincipalType
 import com.openlattice.chronicle.authorization.Role
-import com.openlattice.chronicle.authorization.ScopeType
 import com.openlattice.chronicle.authorization.SecurableObjectType
 import com.openlattice.chronicle.authorization.StudyPermission
 import com.openlattice.chronicle.authorization.SystemRole
@@ -181,15 +180,4 @@ class AuthorizationEnumsTest {
     @Test fun testSystemRoleContainsUser() { assertTrue(SystemRole.contains("user")) }
     @Test fun testSystemRoleNotContainsInvalid() { assertFalse(SystemRole.contains("invalid")) }
     @Test fun testSystemRoleValuesAsArray() { assertEquals(4, SystemRole.valuesAsArray().size) }
-
-    // ===== ScopeType (2 values) =====
-    @Test fun testScopeTypeCount() { assertEquals(2, ScopeType.values().size) }
-    @Test fun testScopeTypeStudy() { assertEquals("STUDY", ScopeType.STUDY.name) }
-    @Test fun testScopeTypeOrganization() { assertEquals("ORGANIZATION", ScopeType.ORGANIZATION.name) }
-    @Test fun testScopeTypeOrdinalStudy() { assertEquals(0, ScopeType.STUDY.ordinal) }
-    @Test fun testScopeTypeOrdinalOrganization() { assertEquals(1, ScopeType.ORGANIZATION.ordinal) }
-    @Test fun testScopeTypeValueOfStudy() { assertEquals(ScopeType.STUDY, ScopeType.valueOf("STUDY")) }
-    @Test fun testScopeTypeValueOfInvalid() {
-        try { ScopeType.valueOf("INVALID"); fail("Expected IllegalArgumentException") } catch (expected: IllegalArgumentException) { /* expected */ }
-    }
 }

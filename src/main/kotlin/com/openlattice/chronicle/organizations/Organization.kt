@@ -18,6 +18,4 @@ public data class Organization(
 
     @field:Size(max = 4000, message = "Organization description exceeds maximum length")
     var description: String = "",
-
-    var settings: Map<String, Any> = mutableMapOf()
 )

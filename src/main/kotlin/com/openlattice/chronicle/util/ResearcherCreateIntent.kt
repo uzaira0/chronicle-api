@@ -1,7 +1,6 @@
 package com.openlattice.chronicle.util
 
 import com.openlattice.chronicle.apikey.ApiKeyApi
-import com.openlattice.chronicle.export.ExportApi
 import com.openlattice.chronicle.study.StudyApi
 import com.openlattice.chronicle.survey.SurveyApi
 import okhttp3.OkHttpClient
@@ -46,7 +45,6 @@ public class ResearcherCreateIntent(public val key: String = UUID.randomUUID().t
 private val createRoutes = listOf(
     StudyApi.CONTROLLER,
     StudyApi.CONTROLLER + StudyApi.STUDY_ID_PATH + ApiKeyApi.API_KEYS_PATH,
-    StudyApi.CONTROLLER + StudyApi.STUDY_ID_PATH + ExportApi.EXPORT_PATH + ExportApi.ASYNC_PATH,
     SurveyApi.CONTROLLER + SurveyApi.STUDY_ID_PATH + SurveyApi.QUESTIONNAIRE_PATH,
 ).map { Regex(it.replace("{${StudyApi.STUDY_ID}}", "[0-9a-fA-F-]+")) }
 

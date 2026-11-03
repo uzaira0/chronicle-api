@@ -4,10 +4,7 @@ import com.openlattice.chronicle.base.OK
 import com.openlattice.chronicle.candidates.Candidate
 import com.openlattice.chronicle.ids.IdConstants
 import com.openlattice.chronicle.participants.ParticipantStats
-import com.openlattice.chronicle.sensorkit.SensorSetting
-import com.openlattice.chronicle.sensorkit.SensorType
 import com.openlattice.chronicle.study.ComplianceViolation
-import com.openlattice.chronicle.study.StudySettingType
 import com.openlattice.chronicle.study.StudySettings
 import com.openlattice.chronicle.study.StudyUpdate
 import com.openlattice.chronicle.study.ViolationReason
@@ -100,21 +97,6 @@ class MiscModelsTest {
     }
 
     // ===== SensorSetting =====
-    @Test fun testSensorSettingEmpty() {
-        val ss = SensorSetting(emptySet())
-        assertTrue(ss.isEmpty())
-    }
-    @Test fun testSensorSettingWithTypes() {
-        val ss = SensorSetting(setOf(SensorType.deviceUsage, SensorType.phoneUsage))
-        assertEquals(2, ss.size)
-        assertTrue(ss.contains(SensorType.deviceUsage))
-    }
-    @Test fun testSensorSettingNoSensorsCompanion() {
-        assertTrue(SensorSetting.NO_SENSORS.isEmpty())
-    }
-    @Test fun testSensorSettingHashCode() {
-        assertEquals(SensorSetting(emptySet()).hashCode(), SensorSetting(emptySet()).hashCode())
-    }
 
     // ===== ComplianceViolation =====
     @Test fun testComplianceViolationConstruction() {
@@ -150,7 +132,6 @@ class MiscModelsTest {
         assertNull(update.settings)
         assertNull(update.modules)
         assertNull(update.contact)
-        assertNull(update.notificationsEnabled)
         assertNull(update.storage)
     }
     @Test fun testStudyUpdateCustomTitle() {
@@ -195,11 +176,7 @@ class MiscModelsTest {
         val ss = StudySettings()
         assertTrue(ss.isEmpty())
     }
-    @Test fun testStudySettingsWithEntries() {
-        val ss = StudySettings(mapOf(StudySettingType.Pipeline to com.openlattice.chronicle.pipeline.PipelineConfig()))
-        assertEquals(1, ss.size)
-        assertTrue(ss.containsKey(StudySettingType.Pipeline))
-    }
+    
     @Test fun testStudySettingsEquality() {
         assertEquals(StudySettings(), StudySettings())
     }

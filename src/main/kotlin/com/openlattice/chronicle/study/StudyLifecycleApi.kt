@@ -22,7 +22,6 @@ public interface StudyLifecycleApi {
         public const val CLONE_PATH: String = "/clone"
         public const val SCHEDULE_DELETE_PATH: String = "/schedule-delete"
         public const val LIFECYCLE_PATH: String = "/lifecycle"
-        public const val DATA_SUMMARY_PATH: String = "/data-summary"
     }
 
     /**
@@ -68,11 +67,4 @@ public interface StudyLifecycleApi {
      */
     @GET(BASE + StudyApi.STUDY_ID_PATH + LIFECYCLE_PATH)
     public fun getStudyLifecycleStatus(@Path(StudyApi.STUDY_ID) studyId: UUID): StudyLifecycleStatus
-
-    /**
-     * Gets a data summary for a study, including row counts per data table.
-     * Useful before archival or deletion to understand scope of impact.
-     */
-    @GET(BASE + StudyApi.STUDY_ID_PATH + LIFECYCLE_PATH + DATA_SUMMARY_PATH)
-    public fun getStudyDataSummary(@Path(StudyApi.STUDY_ID) studyId: UUID): StudyDataSummary
 }

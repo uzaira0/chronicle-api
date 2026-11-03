@@ -51,20 +51,11 @@ public interface PrincipalApi {
     @POST(BASE)
     public fun getSecurablePrincipal(@Body principal: Principal): SecurablePrincipal
 
-    @GET(BASE + USERS)
-    public fun getAllUsers(): Map<String, ChronicleUserProfile>
-
     @GET(BASE + ROLES + CURRENT)
     public fun getCurrentRoles(): Set<SecurablePrincipal>
 
     @GET(BASE + ROLES)
     public fun getAvailableRoles(): Map<AclKey, Role>
-
-    @GET(BASE + USERS + USER_ID_PATH)
-    public fun getUser(@Path(USER_ID) userId: String): ChronicleUserProfile
-
-    @POST(BASE + USERS)
-    public fun getUsers(@Body userIds: Set<String>): Map<String, ChronicleUserProfile>
 
     @POST(BASE + USERS + SEARCH)
     public fun searchUsers(@Body fields: UserSearchFields): Map<String, ChronicleUserProfile>
