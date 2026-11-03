@@ -36,6 +36,22 @@ class AclKeyComparisonTest {
         assertTrue(AclKey(a, b) > AclKey(a, a))
     }
 
+    /** Keys of every shape, including ids that differ only in their high bits, order consistently with equals. */
+    @Test
+    fun compareToAgreesWithEqualsAndIsAntisymmetricForEveryKeyPair() {
+        val ids = listOf(a, b, UUID(Long.MIN_VALUE, 0xaL), UUID(0x10L, 0xaL))
+        val keys = listOf(AclKey()) + ids.map { AclKey(it) } +
+            ids.flatMap { first -> ids.map { AclKey(first, it) } } + ids.map { AclKey(it, a, b) }
+        for (left in keys) for (right in keys) {
+            val label = "$left vs $right"
+            assertEquals(label, left == right, left.compareTo(right) == 0)
+            assertEquals(label, Integer.signum(left.compareTo(right)), -Integer.signum(right.compareTo(left)))
+        }
+        val sorted = sortedSetOf(Comparator<AclKey> { l, r -> l.compareTo(r) }, *keys.reversed().toTypedArray())
+        assertEquals(keys.toSet().size, sorted.size)
+        sorted.zipWithNext().forEach { (lower, higher) -> assertTrue("$lower < $higher", lower < higher) }
+    }
+
     @Test
     fun sortedSetKeepsAKeyAndItsPrefixDistinct() {
         val keys = sortedSetOf(Comparator<AclKey> { l, r -> l.compareTo(r) }, AclKey(a, b), AclKey(a))

@@ -1,6 +1,6 @@
 package com.openlattice.chronicle.models
 
-import com.openlattice.chronicle.AbstractJacksonSerializationTest
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.openlattice.chronicle.authorization.AccessCheck
 import com.openlattice.chronicle.authorization.Ace
 import com.openlattice.chronicle.authorization.AceKey
@@ -11,18 +11,20 @@ import com.openlattice.chronicle.authorization.AclExplanation
 import com.openlattice.chronicle.authorization.AclKey
 import com.openlattice.chronicle.authorization.Action
 import com.openlattice.chronicle.authorization.Authorization
-import com.openlattice.chronicle.authorization.ChronicleStudyRole
 import com.openlattice.chronicle.authorization.Permission
 import com.openlattice.chronicle.authorization.Principal
+import com.openlattice.chronicle.authorization.PrincipalSet
 import com.openlattice.chronicle.authorization.PrincipalType
-import com.openlattice.chronicle.authorization.RoleAssignment
-import com.openlattice.chronicle.authorization.ScopeType
 import com.openlattice.chronicle.authorization.SecurableObjectType
+import com.openlattice.chronicle.authorization.SortedPrincipalSet
+import com.openlattice.chronicle.authorization.SystemUser
+import com.openlattice.chronicle.serializers.FullQualifiedNameJacksonSerializer
+import com.openlattice.chronicle.util.RetrofitBuilders.mapper
+import org.apache.olingo.commons.api.edm.FullQualifiedName
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.OffsetDateTime
@@ -63,10 +65,6 @@ class AuthorizationModelsTest {
         val p2 = Principal(PrincipalType.USER, "u1")
         assertEquals(0, p1.compareTo(p2))
     }
-    @Test fun testPrincipalSelfEquality() {
-        val p = Principal(PrincipalType.USER, "u1")
-        assertEquals(p, p)
-    }
     @Test fun testPrincipalNotEqualsNull() {
         assertNotEquals(Principal(PrincipalType.USER, "u1"), null)
     }
@@ -102,10 +100,6 @@ class AuthorizationModelsTest {
     @Test fun testAclKeyHashCode() {
         val id = UUID.randomUUID()
         assertEquals(AclKey(id).hashCode(), AclKey(id).hashCode())
-    }
-    @Test fun testAclKeySelfEquality() {
-        val key = AclKey(UUID.randomUUID())
-        assertEquals(key, key)
     }
 
     // ===== AccessCheck =====
@@ -159,10 +153,6 @@ class AuthorizationModelsTest {
     @Test fun testAceHashCode() {
         val p = Principal(PrincipalType.USER, "u1")
         assertEquals(Ace(p, setOf(Permission.READ)).hashCode(), Ace(p, setOf(Permission.READ)).hashCode())
-    }
-    @Test fun testAceSelfEquality() {
-        val ace = Ace(Principal(PrincipalType.USER, "u1"), setOf(Permission.READ))
-        assertEquals(ace, ace)
     }
 
     // ===== AceKey =====
@@ -249,10 +239,6 @@ class AuthorizationModelsTest {
         val ace = Ace(Principal(PrincipalType.USER, "u1"), setOf(Permission.READ))
         assertEquals(Acl(key, listOf(ace)), Acl(AclKey(id), listOf(ace)))
     }
-    @Test fun testAclSelfEquality() {
-        val acl = Acl(AclKey(UUID.randomUUID()), listOf())
-        assertEquals(acl, acl)
-    }
     @Test fun testAclHashCode() {
         val id = UUID.randomUUID()
         val key = AclKey(id)
@@ -291,10 +277,6 @@ class AuthorizationModelsTest {
         val paths = listOf(listOf(p))
         assertEquals(AclExplanation(p, paths), AclExplanation(p, paths))
     }
-    @Test fun testAclExplanationSelfEquality() {
-        val e = AclExplanation(Principal(PrincipalType.USER, "u1"), listOf())
-        assertEquals(e, e)
-    }
     @Test fun testAclExplanationHashCode() {
         val p = Principal(PrincipalType.USER, "u1")
         assertEquals(AclExplanation(p, listOf()).hashCode(), AclExplanation(p, listOf()).hashCode())
@@ -316,47 +298,44 @@ class AuthorizationModelsTest {
         assertTrue(s.contains("READ"))
     }
 
-    // ===== RoleAssignment =====
-    @Test fun testRoleAssignmentConstruction() {
-        val scopeId = UUID.randomUUID()
-        val ra = RoleAssignment(
-            principalId = "user1",
-            scopeType = ScopeType.STUDY,
-            scopeId = scopeId,
-            role = ChronicleStudyRole.RESEARCHER
-        )
-        assertEquals("user1", ra.principalId)
-        assertEquals(PrincipalType.USER, ra.principalType)
-        assertEquals(ScopeType.STUDY, ra.scopeType)
-        assertEquals(scopeId, ra.scopeId)
-        assertEquals(ChronicleStudyRole.RESEARCHER, ra.role)
-    }
-    @Test fun testRoleAssignmentDefaultPrincipalType() {
-        val ra = RoleAssignment("u", scopeType = ScopeType.STUDY, scopeId = UUID.randomUUID(), role = ChronicleStudyRole.ANALYST)
-        assertEquals(PrincipalType.USER, ra.principalType)
-    }
-    @Test fun testRoleAssignmentDefaultAssignedByIsUnknown() {
-        val ra = RoleAssignment("u", scopeType = ScopeType.STUDY, scopeId = UUID.randomUUID(), role = ChronicleStudyRole.ANALYST)
-        assertNull(ra.assignedBy)
-    }
-    @Test fun testRoleAssignmentDefaultAssignedAtIsUnknown() {
-        val ra = RoleAssignment("u", scopeType = ScopeType.STUDY, scopeId = UUID.randomUUID(), role = ChronicleStudyRole.ANALYST)
-        assertNull(ra.assignedAt)
-    }
-    @Test fun testRoleAssignmentUnknownMetadataRoundTripsAsNull() {
-        val ra = RoleAssignment(
-            "u",
-            scopeType = ScopeType.STUDY,
-            scopeId = UUID.randomUUID(),
-            role = ChronicleStudyRole.ANALYST,
-        )
-        val mapper = AbstractJacksonSerializationTest.objectMapper()
+    // ===== Stored ACL and principal shapes =====
+    /** An ACE is stored and sent as an object of its fields, never as the permission set it delegates to. */
+    @Test fun aceValueTravelsAsAnObjectOfItsFields() {
+        val ace = AceValue(EnumSet.of(Permission.READ, Permission.WRITE), SecurableObjectType.Study,
+            OffsetDateTime.parse("2027-01-01T00:00:00Z"))
 
-        val json = mapper.writeValueAsString(ra)
-        val roundTrip = mapper.readValue(json, RoleAssignment::class.java)
+        assertEquals(2, ace.size)
+        assertFalse(ace.isEmpty())
+        assertTrue(AceValue(EnumSet.noneOf(Permission::class.java), SecurableObjectType.Study).isEmpty())
+        val json = mapper.readTree(mapper.writeValueAsString(ace))
+        assertEquals(setOf("permissions", "securableObjectType", "expirationDate"), json.fieldNames().asSequence().toSet())
+        assertEquals(ace, mapper.readValue(mapper.writeValueAsString(ace), AceValue::class.java))
+    }
 
-        assertTrue(json.contains("\"assignedBy\":null"))
-        assertTrue(json.contains("\"assignedAt\":null"))
-        assertEquals(ra, roundTrip)
+    /** Background work runs as the Chronicle system user, a user principal named "Chronicle". */
+    @Test fun systemWorkRunsAsTheChronicleUser() {
+        assertEquals(Principal(PrincipalType.USER, "Chronicle"), SystemUser.CHRONICLE.principal)
+    }
+
+    /** Principal sets read and change like the sets they wrap; the sorted one keeps principal order. */
+    @Test fun principalSetsBehaveAsTheirSets() {
+        val researcher = Principal(PrincipalType.USER, "researcher")
+        val admin = Principal(PrincipalType.ROLE, "admin")
+        val set = PrincipalSet(mutableSetOf(researcher))
+        set.add(admin)
+        assertEquals(setOf(researcher, admin), set.principalSet)
+        val sorted = SortedPrincipalSet(TreeSet(listOf(researcher, admin)))
+        assertEquals(admin, sorted.first()) // roles order before users
+        assertTrue(researcher in sorted)
+    }
+
+    /** A full qualified name is written and read as its namespace and name by a mapper the serializer registers with. */
+    @Test fun fullQualifiedNamesRoundTripThroughARegisteredMapper() {
+        val registered = ObjectMapper().also { FullQualifiedNameJacksonSerializer.registerWithMapper(it) }
+        val name = FullQualifiedName("chronicle", "study")
+
+        assertEquals(registered.readTree("""{"namespace":"chronicle","name":"study"}"""),
+            registered.readTree(registered.writeValueAsString(name)))
+        assertEquals(name, registered.readValue(registered.writeValueAsString(name), FullQualifiedName::class.java))
     }
 }

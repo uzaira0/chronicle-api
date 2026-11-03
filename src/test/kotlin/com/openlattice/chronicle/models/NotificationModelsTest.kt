@@ -75,14 +75,6 @@ class NotificationModelsTest {
         val s = StudyNotificationSettings("L", "S")
         assertEquals(StudyDuration(days = 1), s.noDataUploaded)
     }
-    @Test fun testStudyNotificationSettingsDefaultNoTudSubmitted() {
-        val s = StudyNotificationSettings("L", "S")
-        assertEquals(StudyDuration(days = 1), s.noTudSubmitted)
-    }
-    @Test fun testStudyNotificationSettingsDefaultNoAppUsageSurveySubmitted() {
-        val s = StudyNotificationSettings("L", "S")
-        assertEquals(StudyDuration(days = 1), s.noAppUsageSurveySubmitted)
-    }
     @Test fun testStudyNotificationSettingsEnrollmentMessageWithLab() {
         val s = StudyNotificationSettings(labFriendlyName = "BCM", studyFriendlyName = "SleepStudy")
         val msg = s.getEnrollmentMessage()

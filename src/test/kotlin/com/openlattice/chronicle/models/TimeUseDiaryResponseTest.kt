@@ -39,7 +39,7 @@ class TimeUseDiaryResponseTest {
         endDateTime = OffsetDateTime.parse("2026-06-01T09:00:00Z"),
     )
 
-    @Test fun serializesWithLegacyOlPropertyNames() {
+    @Test fun serializesWithOlPropertyNames() {
         val json = mapper.writeValueAsString(sample())
         assertTrue("expected ol.code in $json", json.contains("\"ol.code\""))
         assertTrue("expected ol.title in $json", json.contains("\"ol.title\""))

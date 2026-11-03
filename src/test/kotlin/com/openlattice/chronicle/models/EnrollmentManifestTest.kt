@@ -36,6 +36,7 @@ class EnrollmentManifestTest {
         serverOrigin: String = "https://research.example.org",
         issuedAt: OffsetDateTime = now,
         expiresAt: OffsetDateTime = now.plusMinutes(10),
+        settingsVersion: Int = 3,
     ) = EnrollmentManifest(
         serverOrigin = serverOrigin,
         studyId = UUID.fromString("00000000-0000-0000-0000-000000000001"),
@@ -47,7 +48,7 @@ class EnrollmentManifestTest {
             modules = CollectionDefaults.androidDataCollectionSetting().modules,
             settingsVersion = 3,
         ),
-        settingsVersion = 3,
+        settingsVersion = settingsVersion,
         issuedAt = issuedAt,
         expiresAt = expiresAt,
     )
@@ -79,6 +80,13 @@ class EnrollmentManifestTest {
         assertThrows(IllegalArgumentException::class.java) {
             manifest(expiresAt = now.minusSeconds(1))
         }
+    }
+
+    /** The phone shows the disclosed collection revision; a manifest naming another revision would misstate it. */
+    @Test
+    fun `manifest whose revision differs from its collection settings is refused`() {
+        val refused = assertThrows(IllegalArgumentException::class.java) { manifest(settingsVersion = 4) }
+        assertEquals("settingsVersion must match collectionSettings.settingsVersion", refused.message)
     }
 
     @Test

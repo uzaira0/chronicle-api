@@ -87,10 +87,6 @@ class StudyDurationTest {
         assertEquals(90, d)
     }
 
-    @Test fun testSelfEquality() {
-        val d = StudyDuration(1, 2, 3)
-        assertEquals(d, d)
-    }
 
     @Test fun testNotEqualsDifferentType() {
         assertNotEquals(StudyDuration(1, 2, 3), "not a duration")

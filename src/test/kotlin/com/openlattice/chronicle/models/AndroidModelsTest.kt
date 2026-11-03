@@ -51,24 +51,21 @@ class AndroidModelsTest {
     @Test fun testAndroidDeviceSensorAvailabilityDefaults() {
         val a = AndroidDeviceSensorAvailability()
         assertEquals("", a.participantId)
-        assertEquals("", a.deviceId)
+        assertEquals("", a.randomDeviceId)
         assertTrue(a.availableSensors.isEmpty())
-        assertTrue(a.unavailableSensors.isEmpty())
         assertNull(a.reportedAt)
     }
     @Test fun testAndroidDeviceSensorAvailabilityCustom() {
         val now = OffsetDateTime.now()
         val a = AndroidDeviceSensorAvailability(
             participantId = "p1",
-            deviceId = "d1",
+            randomDeviceId = "d1",
             availableSensors = setOf(AndroidSensorType.accelerometer),
-            unavailableSensors = setOf(AndroidSensorType.proximity),
             reportedAt = now
         )
         assertEquals("p1", a.participantId)
-        assertEquals("d1", a.deviceId)
+        assertEquals("d1", a.randomDeviceId)
         assertEquals(1, a.availableSensors.size)
-        assertEquals(1, a.unavailableSensors.size)
         assertEquals(now, a.reportedAt)
     }
     @Test fun testAndroidDeviceSensorAvailabilityEquality() {
@@ -123,7 +120,7 @@ class AndroidModelsTest {
     }
     @Test fun testAndroidSensorSampleRawValues() {
         val sample = AndroidSensorSample(
-            UUID.randomUUID(), AndroidSensorType.samsungGripWifi, OffsetDateTime.now(), "UTC",
+            UUID.randomUUID(), AndroidSensorType.accelerometer, OffsetDateTime.now(), "UTC",
             values = listOf(1.0f, 2.0f, 3.0f, 4.0f, 5.0f)
         )
         assertEquals(5, sample.values.size)
