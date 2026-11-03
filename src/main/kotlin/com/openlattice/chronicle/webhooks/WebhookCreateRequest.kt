@@ -13,10 +13,10 @@ public data class WebhookCreateRequest(
 
     @field:NotBlank(message = "Webhook secret is required")
     @field:Size(min = 32, max = 255, message = "Webhook secret must be between 32 and 255 characters")
-    val secret: String = "",
+    val secret: String,
 
     @field:NotEmpty(message = "At least one event type is required")
-    val eventTypes: Set<WebhookEventType> = emptySet(),
+    val eventTypes: Set<WebhookEventType>,
 
     @field:Size(max = 1000, message = "Description exceeds maximum length")
     val description: String = ""

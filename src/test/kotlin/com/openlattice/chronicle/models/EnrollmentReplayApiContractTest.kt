@@ -22,6 +22,14 @@ class EnrollmentReplayApiContractTest {
     private val specification: String by lazy { File("chronicle.yaml").readText() }
 
     @Test
+    fun enrollmentResponseTextNeverCarriesTheApiKey() {
+        val response = EnrollmentResponse(UUID.randomUUID(), apiKey = "ck_testprefix_testcredential")
+
+        assertTrue(response.toString(), "testcredential" !in response.toString())
+        assertEquals(response, mapper.readValue(mapper.writeValueAsString(response), EnrollmentResponse::class.java))
+    }
+
+    @Test
     fun enrollV4CarriesTheDurableAttemptAndClientProposedCredential() {
         val studyId = UUID.randomUUID()
         val participantId = "participant"

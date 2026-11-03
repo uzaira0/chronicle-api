@@ -1,7 +1,9 @@
 package com.openlattice.chronicle.models
 
+import com.openlattice.chronicle.util.RetrofitBuilders.mapper
 import com.openlattice.chronicle.webhooks.WebhookCreateRequest
 import com.openlattice.chronicle.webhooks.WebhookDeliveryInfo
+import com.openlattice.chronicle.webhooks.WebhookDeliveryState
 import com.openlattice.chronicle.webhooks.WebhookEventType
 import com.openlattice.chronicle.webhooks.WebhookRegistration
 import org.junit.Assert.assertEquals
@@ -18,38 +20,47 @@ class WebhookModelsTest {
 
     // ===== WebhookCreateRequest =====
     @Test fun testWebhookCreateRequestConstruction() {
-        val r = WebhookCreateRequest(url = "https://example.com/hook")
+        val r = WebhookCreateRequest(url = "https://example.com/hook", secret = "", eventTypes = emptySet())
         assertEquals("https://example.com/hook", r.url)
     }
-    @Test fun testWebhookCreateRequestDefaultSecret() { assertEquals("", WebhookCreateRequest(url = "https://x.com").secret) }
-    @Test fun testWebhookCreateRequestDefaultEventTypes() { assertTrue(WebhookCreateRequest(url = "https://x.com").eventTypes.isEmpty()) }
-    @Test fun testWebhookCreateRequestDefaultDescription() { assertEquals("", WebhookCreateRequest(url = "https://x.com").description) }
+    @Test fun testWebhookCreateRequestExplicitEmptySecret() {
+        assertEquals("", WebhookCreateRequest(url = "https://x.com", secret = "", eventTypes = emptySet()).secret)
+    }
+    @Test fun testWebhookCreateRequestExplicitEmptyEventTypes() {
+        assertTrue(WebhookCreateRequest(url = "https://x.com", secret = "", eventTypes = emptySet()).eventTypes.isEmpty())
+    }
+    @Test fun testWebhookCreateRequestDefaultDescription() {
+        assertEquals("", WebhookCreateRequest(url = "https://x.com", secret = "", eventTypes = emptySet()).description)
+    }
     @Test fun testWebhookCreateRequestCustomEventTypes() {
-        val r = WebhookCreateRequest(url = "https://x.com", eventTypes = setOf(WebhookEventType.DATA_SUBMITTED, WebhookEventType.EXPORT_COMPLETED))
+        val types = setOf(WebhookEventType.DATA_SUBMITTED, WebhookEventType.STUDY_STATUS_CHANGED)
+        val r = WebhookCreateRequest(url = "https://x.com", secret = "", eventTypes = types)
         assertEquals(2, r.eventTypes.size)
         assertTrue(r.eventTypes.contains(WebhookEventType.DATA_SUBMITTED))
     }
     @Test fun testWebhookCreateRequestCustomSecret() {
-        val r = WebhookCreateRequest(url = "https://x.com", secret = "s3cr3t")
+        val r = WebhookCreateRequest(url = "https://x.com", secret = "s3cr3t", eventTypes = emptySet())
         assertEquals("s3cr3t", r.secret)
     }
     @Test fun testWebhookCreateRequestCustomDescription() {
-        val r = WebhookCreateRequest(url = "https://x.com", description = "My webhook")
+        val r = WebhookCreateRequest(url = "https://x.com", secret = "", eventTypes = emptySet(), description = "My webhook")
         assertEquals("My webhook", r.description)
     }
     @Test fun testWebhookCreateRequestEquality() {
         assertEquals(
-            WebhookCreateRequest(url = "https://x.com"),
-            WebhookCreateRequest(url = "https://x.com")
+            WebhookCreateRequest(url = "https://x.com", secret = "", eventTypes = emptySet()),
+            WebhookCreateRequest(url = "https://x.com", secret = "", eventTypes = emptySet())
         )
     }
     @Test fun testWebhookCreateRequestInequality() {
         assertNotEquals(
-            WebhookCreateRequest(url = "https://a.com"),
-            WebhookCreateRequest(url = "https://b.com")
+            WebhookCreateRequest(url = "https://a.com", secret = "", eventTypes = emptySet()),
+            WebhookCreateRequest(url = "https://b.com", secret = "", eventTypes = emptySet())
         )
     }
-    @Test fun testWebhookCreateRequestToString() { assertNotNull(WebhookCreateRequest(url = "https://x.com").toString()) }
+    @Test fun testWebhookCreateRequestToString() {
+        assertNotNull(WebhookCreateRequest(url = "https://x.com", secret = "", eventTypes = emptySet()).toString())
+    }
 
     // ===== WebhookRegistration =====
     @Test fun testWebhookRegistrationDefaults() {
@@ -57,7 +68,6 @@ class WebhookModelsTest {
         assertNotNull(r.webhookId)
         assertEquals(UUID(0, 0), r.studyId)
         assertEquals("", r.url)
-        assertEquals("", r.secret)
         assertTrue(r.eventTypes.isEmpty())
         assertTrue(r.enabled)
         assertEquals("", r.description)
@@ -71,7 +81,6 @@ class WebhookModelsTest {
             webhookId = id,
             studyId = studyId,
             url = "https://x.com",
-            secret = "sec",
             eventTypes = setOf(WebhookEventType.PARTICIPANT_ENROLLED),
             enabled = false,
             description = "desc",
@@ -80,7 +89,6 @@ class WebhookModelsTest {
         assertEquals(id, r.webhookId)
         assertEquals(studyId, r.studyId)
         assertEquals("https://x.com", r.url)
-        assertEquals("sec", r.secret)
         assertEquals(1, r.eventTypes.size)
         assertFalse(r.enabled)
         assertEquals("desc", r.description)
@@ -89,6 +97,21 @@ class WebhookModelsTest {
     @Test fun testWebhookRegistrationToString() { assertNotNull(WebhookRegistration().toString()) }
 
     // ===== WebhookDeliveryInfo =====
+    /** A delivery that gave up is read back by the operator with its terminal state and outcome code. */
+    @Test fun aFailedDeliveryKeepsItsStateThroughJson() {
+        val createdAt = OffsetDateTime.parse("2026-10-05T12:00:00Z")
+        val failed = WebhookDeliveryInfo(UUID.randomUUID(), UUID.randomUUID(), WebhookEventType.DATA_SUBMITTED, 503, 5,
+            createdAt, lastAttemptAt = createdAt.plusHours(1), deliveryState = WebhookDeliveryState.FAILED,
+            outcomeCode = "HTTP_503", completedAt = createdAt.plusHours(1))
+        val json = mapper.writeValueAsString(failed)
+
+        assertEquals("FAILED", mapper.readTree(json)["deliveryState"].asText())
+        assertEquals(failed, mapper.readValue(json, WebhookDeliveryInfo::class.java).let {
+            it.copy(createdAt = it.createdAt.withOffsetSameInstant(createdAt.offset),
+                lastAttemptAt = it.lastAttemptAt?.withOffsetSameInstant(createdAt.offset),
+                completedAt = it.completedAt?.withOffsetSameInstant(createdAt.offset))
+        })
+    }
     @Test fun testWebhookDeliveryInfoConstruction() {
         val delivId = UUID.randomUUID()
         val hookId = UUID.randomUUID()

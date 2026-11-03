@@ -20,5 +20,9 @@ import java.util.UUID
 public data class EnrollmentResponse(
     val chronicleId: UUID,
     val enrollmentId: UUID? = null,
-    val apiKey: String? = null
-)
+    val apiKey: String? = null,
+) {
+    /** The key is a credential, so log lines and error messages show only whether one was issued. */
+    override fun toString(): String =
+        "EnrollmentResponse(chronicleId=$chronicleId, enrollmentId=$enrollmentId, apiKey=${apiKey?.let { "[redacted]" }})"
+}

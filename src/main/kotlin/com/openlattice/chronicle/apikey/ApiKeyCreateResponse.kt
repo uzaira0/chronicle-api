@@ -9,4 +9,6 @@ public data class ApiKeyCreateResponse(
     val keyId: UUID,
     val rawKey: String,
     val info: ApiKeyInfo
-)
+) {
+    override fun toString(): String = "ApiKeyCreateResponse(keyId=$keyId, credential=[REDACTED])"
+}

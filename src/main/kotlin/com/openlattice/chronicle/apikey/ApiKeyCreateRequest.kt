@@ -16,7 +16,7 @@ import jakarta.validation.constraints.Size
 public data class ApiKeyCreateRequest(
     @field:NotBlank(message = "API key name is required")
     @field:Size(max = 255, message = "API key name exceeds maximum length")
-    val name: String = "",
+    val name: String,
 
     @field:NotNull(message = "API key scope is required")
     val scope: ApiKeyScope = ApiKeyScope.READ_ONLY,

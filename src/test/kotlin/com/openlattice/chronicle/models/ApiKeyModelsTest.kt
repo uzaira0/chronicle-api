@@ -5,6 +5,7 @@ import com.openlattice.chronicle.apikey.ApiKeyCreateResponse
 import com.openlattice.chronicle.apikey.ApiKeyInfo
 import com.openlattice.chronicle.apikey.ApiKeyScope
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -15,21 +16,21 @@ import java.util.UUID
 class ApiKeyModelsTest {
 
     // ===== ApiKeyCreateRequest =====
-    @Test fun testApiKeyCreateRequestDefault() { assertNotNull(ApiKeyCreateRequest()) }
-    @Test fun testApiKeyCreateRequestDefaultName() { assertEquals("", ApiKeyCreateRequest().name) }
-    @Test fun testApiKeyCreateRequestDefaultScope() { assertEquals(ApiKeyScope.READ_ONLY, ApiKeyCreateRequest().scope) }
-    @Test fun testApiKeyCreateRequestDefaultExpires() { assertEquals(90, ApiKeyCreateRequest().expiresInDays) }
+    @Test fun testApiKeyCreateRequestDefault() { assertNotNull(ApiKeyCreateRequest(name = "")) }
+    @Test fun testApiKeyCreateRequestExplicitEmptyName() { assertEquals("", ApiKeyCreateRequest(name = "").name) }
+    @Test fun testApiKeyCreateRequestDefaultScope() { assertEquals(ApiKeyScope.READ_ONLY, ApiKeyCreateRequest(name = "").scope) }
+    @Test fun testApiKeyCreateRequestDefaultExpires() { assertEquals(90, ApiKeyCreateRequest(name = "").expiresInDays) }
 
     @Test fun testApiKeyCreateRequestCustomName() {
         val r = ApiKeyCreateRequest(name = "test-key")
         assertEquals("test-key", r.name)
     }
     @Test fun testApiKeyCreateRequestCustomScope() {
-        val r = ApiKeyCreateRequest(scope = ApiKeyScope.ADMIN)
+        val r = ApiKeyCreateRequest(name = "", scope = ApiKeyScope.ADMIN)
         assertEquals(ApiKeyScope.ADMIN, r.scope)
     }
     @Test fun testApiKeyCreateRequestCustomExpires() {
-        val r = ApiKeyCreateRequest(expiresInDays = 365)
+        val r = ApiKeyCreateRequest(name = "", expiresInDays = 365)
         assertEquals(365, r.expiresInDays)
     }
 
@@ -57,7 +58,7 @@ class ApiKeyModelsTest {
         assertEquals("modified", c.name)
         assertEquals(r.scope, c.scope)
     }
-    @Test fun testApiKeyCreateRequestToString() { assertNotNull(ApiKeyCreateRequest().toString()) }
+    @Test fun testApiKeyCreateRequestToString() { assertNotNull(ApiKeyCreateRequest(name = "").toString()) }
 
     // ===== ApiKeyInfo =====
     @Test fun testApiKeyInfoConstruction() {
@@ -119,6 +120,7 @@ class ApiKeyModelsTest {
             OffsetDateTime.now(), OffsetDateTime.now().plusDays(90)
         )
         val resp = ApiKeyCreateResponse(UUID.randomUUID(), "raw", info)
-        assertNotNull(resp.toString())
+        assertFalse(resp.toString().contains(resp.rawKey))
+        assertEquals("raw", resp.rawKey)
     }
 }
