@@ -252,7 +252,11 @@ public interface StudyApi {
      * @return A map of participantId to list of app-device instance info maps.
      */
     @GET(BASE + STUDY_ID_PATH + DEVICES_PATH)
-    public fun getStudyDevices(@Path(STUDY_ID) studyId: UUID): Map<String, List<Map<String, Any>>>
+    public fun getStudyDevices(
+        @Path(STUDY_ID) studyId: UUID,
+        @Query("limit") limit: Int = 100,
+        @Query("offset") offset: Int = 0,
+    ): Map<String, List<Map<String, Any>>>
 
     /**
      * Retrieves sensor availability reports for all devices in a study.
@@ -309,6 +313,8 @@ public interface StudyApi {
     @GET(BASE + STUDY_ID_PATH + PARTICIPANTS_PATH + IOS_PATH + UPLOAD_STATUS_PATH)
     public fun getIosUploadStatus(
         @Path(STUDY_ID) studyId: UUID,
+        @Query("limit") limit: Int = 100,
+        @Query("offset") offset: Int = 0,
     ): Map<String, IosUploadStatus>
 
     /** Full keyset-paginated upload-diagnostic and data-quality alert history. */

@@ -40,7 +40,11 @@ public interface StudyComplianceApi {
 
     }
     @GET(BASE + STUDY + STUDY_ID_PATH)
-    public fun getStudyComplianceViolations(@Path(STUDY_ID) studyId: UUID): Map<UUID, Map<String, List<ComplianceViolation>>>
+    public fun getStudyComplianceViolations(
+        @Path(STUDY_ID) studyId: UUID,
+        @retrofit2.http.Query("limit") limit: Int = 100,
+        @retrofit2.http.Query("offset") offset: Int = 0,
+    ): Map<UUID, Map<String, List<ComplianceViolation>>>
 
     @POST(BASE + NOTIFICATION)
     public fun triggerStudyComplianceNotifications(@Body studyIds: Set<UUID>) : OK

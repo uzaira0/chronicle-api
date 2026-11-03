@@ -7,6 +7,7 @@ import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 import java.util.*
 
 public interface ApiKeyApi {
@@ -24,7 +25,11 @@ public interface ApiKeyApi {
     ): ApiKeyCreateResponse
 
     @GET(StudyApi.BASE + StudyApi.STUDY_ID_PATH + API_KEYS_PATH)
-    public fun listApiKeys(@Path(StudyApi.STUDY_ID) studyId: UUID): List<ApiKeyInfo>
+    public fun listApiKeys(
+        @Path(StudyApi.STUDY_ID) studyId: UUID,
+        @Query("limit") limit: Int = 100,
+        @Query("offset") offset: Int = 0,
+    ): List<ApiKeyInfo>
 
     @DELETE(StudyApi.BASE + StudyApi.STUDY_ID_PATH + API_KEYS_PATH + KEY_ID_PATH)
     public fun revokeApiKey(
