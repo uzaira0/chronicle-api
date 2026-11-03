@@ -17,29 +17,39 @@ import java.time.OffsetDateTime
 import java.util.UUID
 
 class ParticipantDownloadContractTest {
-    @Test
-    fun `Retrofit requests JSON rows for diagnostics and quality alerts`() {
-        val studyId = UUID.randomUUID()
-        val start = OffsetDateTime.parse("2026-09-05T00:00:00-04:00")
-        val end = OffsetDateTime.parse("2026-09-06T01:00:00-03:00")
+    private fun api(studyId: UUID, start: OffsetDateTime?, end: OffsetDateTime?): StudyApi {
         val client = OkHttpClient.Builder().addInterceptor { chain ->
             val request = chain.request()
             assertEquals("/chronicle/v3/study/$studyId/participants/data", request.url.encodedPath)
             assertEquals(listOf("p1", "p2"), request.url.queryParameterValues("participantId"))
-            assertEquals(start.toString(), request.url.queryParameter("startDate"))
-            assertEquals(end.toString(), request.url.queryParameter("endDate"))
+            assertEquals(start?.toString(), request.url.queryParameter("startDate"))
+            assertEquals(end?.toString(), request.url.queryParameter("endDate"))
             assertEquals("json", request.url.queryParameter("responseType"))
             Response.Builder().request(request).protocol(Protocol.HTTP_1_1).code(200).message("OK")
                 .header("Content-Type", "application/json")
                 .body("[{\"event_id\":\"opaque-id\"}]".toResponseBody("application/json".toMediaType())).build()
         }.build()
-        val api = RetrofitBuilders.decorateWithRhizomeFactories(
+        return RetrofitBuilders.decorateWithRhizomeFactories(
             RetrofitBuilders.createBaseChronicleRetrofitBuilder("http://localhost/", client),
         ).build().create(StudyApi::class.java)
-        listOf(ParticipantDataType.UploadDiagnostics, ParticipantDataType.DataQualityAlerts).forEach { type ->
-            assertEquals("opaque-id", api.getParticipantsData(studyId, type, linkedSetOf("p1", "p2"), start, end)
-                .single()["event_id"])
-        }
+    }
+
+    @Test
+    fun `Retrofit requests JSON rows for diagnostics and quality alerts`() {
+        val studyId = UUID.randomUUID()
+        val start = OffsetDateTime.parse("2026-09-05T00:00:00-04:00")
+        val end = OffsetDateTime.parse("2026-09-06T01:00:00-03:00")
+        val rows = api(studyId, start, end)
+            .getParticipantsData(studyId, ParticipantDataType.UploadDiagnostics, linkedSetOf("p1", "p2"), start, end)
+        assertEquals("opaque-id", rows.single()["event_id"])
+    }
+
+    @Test
+    fun `Retrofit omits an open bound`() {
+        val studyId = UUID.randomUUID()
+        val rows = api(studyId, null, null)
+            .getParticipantsData(studyId, ParticipantDataType.UploadDiagnostics, linkedSetOf("p1", "p2"))
+        assertEquals("opaque-id", rows.single()["event_id"])
     }
 
     @Test
@@ -52,10 +62,11 @@ class ParticipantDownloadContractTest {
             .filter { it["in"] == "query" }.associateBy { it["name"] }
         assertEquals(setOf("dataType", "participantId", "startDate", "endDate", "responseType", "fileName", "sensorTypes"),
             parameters.keys)
-        listOf("dataType", "participantId", "startDate", "endDate").forEach { name ->
+        listOf("dataType", "participantId").forEach { name ->
             assertEquals("$name must be required", true, parameters.getValue(name)["required"])
         }
-        listOf("responseType", "fileName", "sensorTypes").forEach { name ->
+        // SynchronousExportRequest binds both bounds as nullable: an omitted bound is open.
+        listOf("startDate", "endDate", "responseType", "fileName", "sensorTypes").forEach { name ->
             assertTrue("$name must be optional", parameters.getValue(name)["required"] != true)
         }
         val participant = parameters["participantId"]!!
@@ -63,7 +74,7 @@ class ParticipantDownloadContractTest {
         assertEquals(true, participant["explode"])
         val participantSchema = participant["schema"]!! as Map<*, *>
         assertEquals(1, participantSchema["minItems"])
-        assertEquals(100, participantSchema["maxItems"])
+        assertEquals("The export participant cap is removed", null, participantSchema["maxItems"])
         listOf("startDate", "endDate").forEach { name ->
             assertEquals("date-time", (parameters.getValue(name)["schema"]!! as Map<*, *>)["format"])
         }

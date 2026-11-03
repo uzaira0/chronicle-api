@@ -326,23 +326,22 @@ public interface StudyApi {
         @Query("limit") limit: Int = 50,
     ): AndroidDiagnosticsPage
 
-
     /**
      * Retrieve data of specified type associated with a set of participants in a study, bounded by a lower and upper offset datetime.
      * The interpretation of the date range depends on the context in which this endpoint is invoked.
      * @param studyId studyId
-     * @param dataType one of  UsageEvents, Preprocessed,AppUsageSurvey, IOSSensor
+     * @param dataType the [ParticipantDataType] to read
      * @param participantIds ids of participants
-     * @param startDateTime the required lower bound date
-     * @param endDateTime the required upper bound date
+     * @param startDateTime inclusive lower bound; null starts at the earliest retained row
+     * @param endDateTime exclusive upper bound; null runs to the latest retained row
      */
     @GET(BASE + STUDY_ID_PATH + PARTICIPANTS_PATH + DATA_PATH + "?responseType=json")
     public fun getParticipantsData(
         @Path(STUDY_ID) studyId: UUID,
         @Query(DATA_TYPE) dataType: ParticipantDataType,
         @Query(PARTICIPANT_ID) participantIds: Set<String>,
-        @Query(START_DATE) startDateTime: OffsetDateTime,
-        @Query(END_DATE) endDateTime: OffsetDateTime,
+        @Query(START_DATE) startDateTime: OffsetDateTime? = null,
+        @Query(END_DATE) endDateTime: OffsetDateTime? = null,
     ): Iterable<Map<String, Any>>
 
     /**
