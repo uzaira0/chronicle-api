@@ -21,6 +21,8 @@ public data class EnrollmentResponse(
     val chronicleId: UUID,
     val enrollmentId: UUID? = null,
     val apiKey: String? = null,
+    /** The phone consumes only stops after this enrollment response, including before its first status poll. */
+    val hardStopGeneration: Long? = null,
 ) {
     /** The key is a credential, so log lines and error messages show only whether one was issued. */
     override fun toString(): String =
