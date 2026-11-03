@@ -304,12 +304,7 @@ public interface StudyApi {
         @Query("offset") offset: Int = 0,
     ): Map<String, ParticipantStats>
 
-    /**
-     * Retrieves server-observed iOS upload/commit state for participants in a study.
-     *
-     * This reports rows already moved into long-term iOS sensor storage plus any
-     * iOS upload-buffer records still waiting for the background mover.
-     */
+    /** Retrieves the stored iOS Screen Time state of each participant in a study. */
     @GET(BASE + STUDY_ID_PATH + PARTICIPANTS_PATH + IOS_PATH + UPLOAD_STATUS_PATH)
     public fun getIosUploadStatus(
         @Path(STUDY_ID) studyId: UUID,
