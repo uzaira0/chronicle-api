@@ -38,11 +38,8 @@ import java.util.*
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "@class")
 @JsonSubTypes(
     JsonSubTypes.Type(value = SecurablePrincipal::class, name = "SecurablePrincipal"),
-    JsonSubTypes.Type(value = SecurablePrincipal::class, name = "com.openlattice.chronicle.authorization.SecurablePrincipal"),
     JsonSubTypes.Type(value = OrganizationPrincipal::class, name = "OrganizationPrincipal"),
-    JsonSubTypes.Type(value = OrganizationPrincipal::class, name = "com.openlattice.chronicle.organizations.OrganizationPrincipal"),
     JsonSubTypes.Type(value = Role::class, name = "Role"),
-    JsonSubTypes.Type(value = Role::class, name = "com.openlattice.chronicle.authorization.Role")
 )
 public open class SecurablePrincipal : AbstractSecurableObject {
     public val aclKey: AclKey

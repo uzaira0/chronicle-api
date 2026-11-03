@@ -3,6 +3,8 @@ package com.openlattice.chronicle.models
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException
 import com.openlattice.chronicle.AbstractJacksonSerializationTest
 import com.openlattice.chronicle.authorization.Principal
+import com.openlattice.chronicle.authorization.Role
+import com.openlattice.chronicle.organizations.OrganizationPrincipal
 import com.openlattice.chronicle.authorization.PrincipalType
 import com.openlattice.chronicle.authorization.SecurablePrincipal
 import org.junit.Assert.assertEquals
@@ -29,13 +31,12 @@ class SecurablePrincipalJacksonSecurityTest {
     }
 
     @Test
-    fun `legacy securable principal type id remains readable without arbitrary class loading`() {
-        val json = mapper.writeValueAsString(securablePrincipal())
-            .replace("\"SecurablePrincipal\"", "\"com.openlattice.chronicle.authorization.SecurablePrincipal\"")
-
-        val restored = mapper.readValue(json, SecurablePrincipal::class.java)
-
-        assertEquals(PrincipalType.USER, restored.principal.type)
+    fun `full class type aliases are rejected`() {
+        for (type in listOf(SecurablePrincipal::class.java, Role::class.java, OrganizationPrincipal::class.java)) {
+            val json = mapper.writeValueAsString(securablePrincipal())
+                .replace("\"SecurablePrincipal\"", "\"${type.name}\"")
+            assertThrows(InvalidTypeIdException::class.java) { mapper.readValue(json, SecurablePrincipal::class.java) }
+        }
     }
 
     @Test
