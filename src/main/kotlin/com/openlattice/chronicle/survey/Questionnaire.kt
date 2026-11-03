@@ -73,7 +73,7 @@ public data class QuestionnaireResponse(
 
     @field:NotNull(message = "Response value is required")
     @field:Size(max = 100, message = "Response has too many values")
-    val value: Set<@Size(max = 4000, message = "Response value exceeds maximum length") String>
+    val value: Set<@Size(max = 10_000, message = "Response value exceeds maximum length") String>
 ) {
     init {
         check(questionTitle.isNotBlank()) { "question title must be non-blank" }

@@ -15,7 +15,7 @@ import java.time.OffsetDateTime
 public data class TimeUseDiaryResponse(
 
         @field:NotBlank(message = "Code is required")
-        @field:Size(max = 100, message = "Code exceeds maximum length")
+        @field:Size(max = 255, message = "Code exceeds maximum length")
         @param:JsonProperty("ol.code")
         @param:JsonAlias("code")
         val code: String,
