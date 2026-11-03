@@ -19,11 +19,27 @@
  */
 
 buildscript {
+    // swagger-codegen pulls guava 23.0 onto this classpath; raise-only pin from gradles/guava.gradle.
+    apply from: file('../gradles/guava.gradle').exists() ? '../gradles/guava.gradle' : '../methodic/gradles/guava.gradle'
+    dependencies.components.all(guavaPinMetadataRule)
     repositories {
         mavenCentral()
     }
     dependencies {
-        classpath('io.swagger:swagger-codegen:3.0.0-rc1')
+        classpath('io.swagger.codegen.v3:swagger-codegen:3.0.82') {
+            // The maintained Classic floor supplies matching Core without resolving the old direct Core POM.
+            exclude group: 'ch.qos.logback', module: 'logback-core'
+        }
+        classpath('io.swagger.codegen.v3:swagger-codegen-generators:1.0.62')
+        // Preserve the parser fix for valid object-valued schema defaults.
+        classpath('io.swagger.parser.v3:swagger-parser:2.1.48')
+        // Security floors for codegen dependencies; removal reviews live in the root inventory.
+        def securityClasspathFloors = [
+            'ch.qos.logback:logback-classic:1.6.6',
+            'com.github.jknack:handlebars:4.5.8',
+            'com.fasterxml.jackson.core:jackson-databind:2.22.3',
+        ]
+        securityClasspathFloors.each { classpath it }
     }
 }
 
@@ -100,19 +116,19 @@ spotbugsMain {
 
 //TODO: Once Swagger 3.0 has working OpenAPI support finish wiring all this in.
 
-import io.swagger.codegen.DefaultGenerator
-import io.swagger.codegen.config.CodegenConfigurator
+import io.swagger.codegen.v3.DefaultGenerator
+import io.swagger.codegen.v3.config.CodegenConfigurator
 
-def swaggerInput = "chronicle.yaml"
+def swaggerInput = file('chronicle.yaml').absolutePath
 def swaggerOutputDir = file('build/swagger')
 task swaggerDocs {
     inputs.file(swaggerInput)
     outputs.dir(swaggerOutputDir)
     doLast {
         def config = new CodegenConfigurator()
-        config.setInputSpec(swaggerInput)
+        config.setInputSpecURL(swaggerInput)
         config.setOutputDir(swaggerOutputDir.path)
-        config.setLang('java')
+        config.setLang('io.swagger.codegen.v3.generators.java.JavaClientCodegen')
         config.setAdditionalProperties([
                 'dateLibrary': 'java8'
         ])
@@ -128,9 +144,9 @@ task swaggerJava {
     outputs.dir(swaggerOutputDir)
     doLast {
         def config = new CodegenConfigurator()
-        config.setInputSpec(swaggerInput)
+        config.setInputSpecURL(swaggerInput)
         config.setOutputDir(swaggerOutputDir.path)
-        config.setLang('java')
+        config.setLang('io.swagger.codegen.v3.generators.java.JavaClientCodegen')
         config.setAdditionalProperties([
                 'dateLibrary': 'java8'
         ])
@@ -143,7 +159,7 @@ task swaggerJava {
 
 // Run by scripts/local-ci.sh jvm-smoke ("Validate OpenAPI spec"). Parses and
 // validates chronicle.yaml with the OpenAPI 3 parser (on the buildscript classpath
-// via swagger-codegen) and fails the build on any parse/validation message.
+// explicitly above) and fails the build on any parse/validation message.
 task validateOpenApiSpec {
     inputs.file(swaggerInput)
     doLast {
@@ -171,8 +187,7 @@ clean.doFirst {
 }
 
 test {
-    // A failing API-model unit test MUST fail the build (was previously masked by
-    // ignoreFailures = true). chronicle-api:test is a CI gate (ci.yml).
+    // A failing API-model unit test fails the build.
     ignoreFailures = false
 }
 
