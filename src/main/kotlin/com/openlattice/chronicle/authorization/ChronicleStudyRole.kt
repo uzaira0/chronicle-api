@@ -20,7 +20,7 @@ import java.util.EnumSet
 
 /**
  * Defines roles for study-level access control in Chronicle.
- * Each role has a specific set of permissions that implement HIPAA's "minimum necessary" principle.
+ * Each role has only the permissions its tasks need.
  *
  * Note: Participants do NOT have system accounts. They submit data via mobile API with app key
  * authentication only and never read data back through the system.

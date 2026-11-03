@@ -18,8 +18,7 @@ package com.openlattice.chronicle.authorization
 
 /**
  * Defines granular permissions for study-level access control.
- * These permissions implement HIPAA's "minimum necessary" principle by allowing
- * fine-grained control over what actions users can perform on study data.
+ * Each permission covers one action on study data, so a role grants only the actions its users need.
  *
  * @author uzaira0
  */

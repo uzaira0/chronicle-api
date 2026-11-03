@@ -173,7 +173,6 @@ public interface StudyApi {
      * the header (or sending `*`) skips the check, preserving behaviour for existing mobile/iOS
      * clients. Every successful settings write increments the revision and returns it in `ETag`.
      *
-     * Updating SensorKit data collection for a study requires admin permission due to Apple restrictions.
      * @param studyId The id of the study to update.
      * @param settingType The setting type to update.
      * @param settings The new settings for the study.
@@ -392,9 +391,9 @@ public interface StudyApi {
     /**
      * Retrieves the participant collection-acknowledgment trail for a study — the
      * append-only record of when each participant acknowledged each newly-enabled
-     * collection module (design `docs/COLLECTION-LOOP-CLOSURE-DESIGN.md` §5.3).
+     * collection module.
      * Surfaced in the web audit view alongside [getStudySettingsAudit]; kept as a
-     * sibling feed so the immutable settings-audit schema stays unchanged (§11).
+     * sibling feed so the immutable settings-audit schema stays unchanged.
      *
      * @param studyId The id of the study.
      * @param limit Maximum number of acknowledgment entries to return.
@@ -477,8 +476,7 @@ public interface StudyApi {
 
     /**
      * Records a participant's on-device acknowledgment of one or more newly-enabled
-     * collection modules — the device-side close of the consent loop (design
-     * `docs/COLLECTION-LOOP-CLOSURE-DESIGN.md` §5.2). A module enabled by a researcher
+     * collection modules, the device-side close of the consent loop. A module enabled by a researcher
      * stays in `PENDING_ACK` (not collecting) until the participant acknowledges it
      * on-device, at which point the app calls this endpoint.
      *
