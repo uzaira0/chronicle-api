@@ -8,8 +8,6 @@ import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Path
-import retrofit2.http.Query
-import java.time.OffsetDateTime
 import java.util.*
 
 /**
@@ -56,14 +54,11 @@ public interface StudyLifecycleApi {
     ): UUID
 
     /**
-     * Schedules a study for future deletion. The study will be permanently
-     * deleted by a background job after the specified date.
+     * Requests the study's deletion: its data is blocked at once and stays until an owner runs the
+     * erasure from the study's deletion list. Nothing is erased on a schedule.
      */
     @DELETE(BASE + StudyApi.STUDY_ID_PATH + SCHEDULE_DELETE_PATH)
-    public fun scheduleStudyDeletion(
-        @Path(StudyApi.STUDY_ID) studyId: UUID,
-        @Query("deleteAfter") deleteAfter: OffsetDateTime
-    ): OK
+    public fun scheduleStudyDeletion(@Path(StudyApi.STUDY_ID) studyId: UUID): OK
 
     /**
      * Cancels a scheduled deletion, returning the study to its previous lifecycle status.
